@@ -5,28 +5,6 @@ import numpy as np
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit
 # reward as shown in the paper.
 class Environment:
-    """Definition of the trading environment for the DQN-Agent.
-
-    Attributes:
-        data (pandas.DataFrame): Time serie to be considered within the environment.
-
-        t (:obj:`int`): Current time instant we are considering.
-
-        profits (:obj:`float`): profit of the agent at time self.t
-
-        agent_positions(:obj:`list` :obj:`float`): list of the positions
-           currently owned by the agent.
-
-        agent_position_value(:obj:`float`): current value of open positions
-           (positions in self.agent_positions)
-
-        cumulative_return(:obj:`list` :obj:`float`): econometric measure of profit
-            during time
-
-        init_price(:obj:`float`): the price of stocks at the beginning of trading
-            period.
-    """
-
     def __init__(self, data, reward):
         """
         Creates the environment. Note: Before using the environment you must call
@@ -64,11 +42,26 @@ class Environment:
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if not self.done:
-            return torch.tensor(
-                [el for el in self.data.iloc[self.t - 23 : self.t + 1, :]["Close"]],
+            # print(type(self.data))
+            # to_tensors_values = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :][["Close", "Target"]].values]
+            to_tensors_values = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :]["Close"]]
+            t1 = torch.tensor(
+                to_tensors_values,
                 device=device,
                 dtype=torch.float,
             )
+            # columns = ["Close", "Target", "SMA_13"]
+            
+            # columns = ["Close"]
+            # to_tensors_values2 = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :][columns].values]
+            # t2 = torch.tensor(
+            #     np.array(to_tensors_values2),  # Преобразуйте список NumPy.ndarray в один массив NumPy
+            #     device=device,
+            #     dtype=torch.float,
+            # )
+            # print(t1.shape, t2.shape)
+            return t1
+
         else:
             return None
 
@@ -99,11 +92,15 @@ class Environment:
         if act == 0:  # Do Nothing
             pass
 
-        if act == 1:  # Buy
+        # BUY
+        if act == 1:
+            # TODO: integration
             self.agent_positions.append(self.data.iloc[self.t, :]["Close"])
 
+        # SELL
         sell_nothing = False
-        if act == 2:  # Sell
+        if act == 2:
+            # TODO: integration
             profits = 0
             if len(self.agent_positions) < 1:
                 sell_nothing = True
@@ -127,30 +124,6 @@ class Environment:
             ) / self.init_price
 
         # COLLECT THE REWARD
-        reward = 0
-        if self.reward_f == "sr":
-            sr = (
-                self.agent_open_position_value
-                / np.std(np.array(self.data.iloc[0 : self.t]["Close"]))
-                if np.std(np.array(self.data.iloc[0 : self.t]["Close"])) != 0
-                else 0
-            )
-            # sr = self.profits[self.t] / np.std(np.array(self.profits))
-            if sr <= -4:
-                reward = -10
-            elif sr < -1:
-                reward = -4
-            elif sr < 0:
-                reward = -1
-            elif sr == 0:
-                reward = 0
-            elif sr <= 1:
-                reward = 1
-            elif sr < 4:
-                reward = 4
-            else:
-                reward = 10
-
         if self.reward_f == "profit":
             p = self.profits[self.t]
             if p > 0:
@@ -164,7 +137,7 @@ class Environment:
             reward = -5
 
         # UPDATE THE STATE
-        self.t += 1
+        self.t += 1  # self.t - tick
 
         if self.t == len(self.data) - 1:
             self.done = True
