@@ -35,7 +35,7 @@ class ReplayMemory(object):
         return len(self.memory)
 
 
-def print_stats(model: str, value: list[float], t=None):
+def print_stats(model, value, t):
     value = np.array(value).flatten()
     t.add_row(
         [

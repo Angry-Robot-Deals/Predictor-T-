@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 from src.Environment import Environment
-from src.models.dqns import ConvDQN, ConvDuelingDQN
+from src.models import ConvDQN, ConvDuelingDQN
 from src.utils import ReplayMemory
 from src.utils import Transition
 import random
@@ -458,6 +458,7 @@ class Agent:
 
         # Load policy from train torch model
         self.load_policy(model_name=model_name, path=path)
+        self.load_policy(model_name=model_name, path=path)
 
         # PREDICT
         env_test.reset()  # reset the env st it is set at the beginning of the time series
@@ -593,3 +594,187 @@ class Agent:
                 break
 
         return cumulative_reward, reward_list, true_values
+
+    def load_policy(self, model_name=None, path=None):
+        # raise exceptions
+        if model_name is None:
+            pass
+
+        elif path is not None:
+            if re.match(".*_dqn_.*", model_name):
+                self.policy_net = ConvDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
+                    self.device
+                )
+                if str(self.device) == "cuda":
+                    self.policy_net.load_state_dict(torch.load(path))
+                else:
+                    self.policy_net.load_state_dict(
+                        torch.load(path, map_location=torch.device("cpu"))
+                    )
+            elif re.match(".*_ddqn_.*", model_name):
+                self.policy_net = ConvDuelingDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
+                    self.device
+                )
+                if str(self.device) == "cuda":
+                    self.policy_net.load_state_dict(torch.load(path))
+                else:
+                    self.policy_net.load_state_dict(
+                        torch.load(path, map_location="cpu")
+                    )
+            else:
+                raise RuntimeError("Please Provide a valid model name or valid path.")
+        else:
+            raise RuntimeError("Path can not be None if model Name is not None.")
+
+    def load_weights(self, path):
+        pass
+
+    def demo(
+        self,
+        env_demo: Environment,
+        model_name=None,
+        path=None,
+        steps=100,
+        fn_signal=None,
+    ):
+        cumulative_reward = [0 for t in range(len(env_demo.data))]
+        reward_list = [0 for t in range(len(env_demo.data))]
+        true_values = [0 for t in range(len(env_demo.data))]
+        self.load_policy(model_name=model_name, path=path)
+        print(
+            f"demo for {steps} steps.",
+        )
+        # TODO: it can be better to get state from service and one state in loop (dedupl)
+
+        for step in tqdm(range(steps)):
+            print(">>> tick:", step)
+            # Select and perform an action
+            state = env_demo.get_state()
+            action = self.select_action_tensor(state)
+            reward, done, _ = env_demo.step(action, state)
+
+            # Collect reward and true value
+            true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
+            true_values[step] = true_value
+            cumulative_reward[step] += (
+                reward.item() + cumulative_reward[step - 1 if step - 1 > 0 else 0]
+            )
+
+            # reward list
+            reward_list[step] = reward.item()
+
+            # ...
+            vector = (
+                action.item(),
+                reward.item(),
+                done,
+                true_value,
+                env_demo.agent_positions,
+            )
+
+            # send signal
+            if fn_signal is not None:
+                import asyncio
+                import json
+                asyncio.run(fn_signal(
+                    timestamp=time.time(),
+                    name='profit_reward_double_ddqn_model_1200m_1ke_BTC|USDT',
+                    positions=env_demo.agent_positions,
+                    side=action.item(),
+                    true=true_value,
+                    price=env_demo.last_price,
+                    vector=vector
+                    ))
+
+            
+            print("exit state:")
+            pprint(vector)
+
+            # Load next state
+            # next_state = env_demo.get_state()
+            # state = next_state
+            if done:
+                # ...
+                break
+
+        return cumulative_reward, reward_list, true_values
+
+    def load_policy(self, model_name=None, path=None):
+        # raise exceptions
+        if model_name is None:
+            pass
+
+        elif path is not None:
+            if re.match(".*_dqn_.*", model_name):
+                self.policy_net = ConvDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
+                    self.device
+                )
+                if str(self.device) == "cuda":
+                    self.policy_net.load_state_dict(torch.load(path))
+                else:
+                    self.policy_net.load_state_dict(
+                        torch.load(path, map_location=torch.device("cpu"))
+                    )
+            elif re.match(".*_ddqn_.*", model_name):
+                self.policy_net = ConvDuelingDQN(
+                    self.INPUT_DIM, self.ACTION_NUMBER
+                ).to(self.device)
+                if str(self.device) == "cuda":
+                    self.policy_net.load_state_dict(torch.load(path))
+                else:
+                    self.policy_net.load_state_dict(
+                        torch.load(path, map_location="cpu")
+                    )
+            else:
+                raise RuntimeError(
+                    "Please Provide a valid model name or valid path."
+                )
+        else:
+            raise RuntimeError("Path can not be None if model Name is not None.")
+
+    def load_weights(self, path):
+        pass
+
+    def demo(self, env_demo: Environment, model_name=None, path=None, steps=100):
+        cumulative_reward = [0 for t in range(len(env_demo.data))]
+        reward_list = [0 for t in range(len(env_demo.data))]
+        true_values = [0 for t in range(len(env_demo.data))]
+        self.load_policy(model_name=model_name, path=path)
+        print(f'demo for {steps} steps.', ) 
+        # TODO: it can be better to get state from service and one state in loop (dedupl)
+
+        for step in tqdm(
+            range(steps)
+        ):  
+            print('>>> tick:', step)
+            # Select and perform an action
+            state = env_demo.get_state()     
+            action = self.select_action_tensor(state)
+            reward, done, _ = env_demo.step(action, state)
+
+            # Collect reward and true value
+            true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
+            true_values[step] = true_value
+            cumulative_reward[step] += (
+                reward.item() + cumulative_reward[step - 1 if step - 1 > 0 else 0]
+            )
+            reward_list[step] = reward.item()
+            # ...
+            vector = (
+                action.item(), 
+                reward.item(), 
+                done, 
+                true_value, 
+                env_demo.agent_positions
+                )
+            print('exit state:')
+            pprint(vector)
+
+            # Load next state
+            # next_state = env_demo.get_state()
+            # state = next_state
+            if done:
+                # ...
+                break
+
+        return cumulative_reward, reward_list, true_values          
