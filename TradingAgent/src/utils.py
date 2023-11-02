@@ -159,6 +159,7 @@ def load_data(filepath=None, timerange=None):
         print("Shape of aggregated dataset:", df.shape)
     else:
         raise Exception(f"{filepath} ???? Not found!")
+        raise Exception(f"{filepath} ???? Not found!")
 
     return df
 
