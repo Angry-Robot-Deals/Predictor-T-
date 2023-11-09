@@ -3,7 +3,7 @@
 If you interested in RL and this project you can get more research information [here](docs/notebooks/summary.ipynb).
 
 # Demo:
-<a href='https://23.88.34.218:3000/d/a529ab16-7822-4ff5-9159-7af9e588d216/trade-btc-usdt-demo?orgId=1&from=1699531603114&to=1699553203114'>Grafana Dashboard</a>
+<a href="https://grafana.angryrobot.deals:3000/public-dashboards/1b55c950f72d4f4fac07e3833a97bbf6?orgId=1&refresh=1m">Grafana Dashboard</a>
 <img src='https://github.com/xsa-dev/Trading-Bot---Deep-Reinforcement-Learning/blob/master/docs/Screenshot%202023-11-09%20at%2017.27.36.png'/>
 
 # UI Template:
