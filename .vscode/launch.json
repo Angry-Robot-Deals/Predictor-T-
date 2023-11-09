@@ -5,10 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "XAT",
             "type": "python",
             "request": "launch",
-            "program": "Bot_code_and_models/agent.py",
+            "program": "TradingAgent/agent.py",
+            "autoReload": {
+                "enabled": true
+            },
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true
         }
