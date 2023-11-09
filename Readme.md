@@ -1,6 +1,6 @@
 # A Deep Reinforcement Learning Trading Bot
 
-If you interested in RL and this project you can get more research information [here](docs/summary.ipynb).
+If you interested in RL and this project you can get more research information [here](docs/notebooks/summary.ipynb).
 
 # Dependencies 
 Dependecies:    
