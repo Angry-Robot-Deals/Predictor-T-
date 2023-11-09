@@ -258,3 +258,7 @@ def demo():
 
             completed = sum(task.completed for task in job_progress.tasks)
             overall_progress.update(overall_task, completed=completed)
+
+
+if __name__ == "__main__":
+    demo()

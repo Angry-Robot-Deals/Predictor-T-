@@ -8,7 +8,7 @@ COMMISION = 0.0
 
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
-    def __init__(self, data, reward, remote=False):
+    def __init__(self, data, reward, remote=False, send_profit_fn=None):
         """
         Creates the environment. Note: Before using the environment you must call
         the Environment.reset() method.

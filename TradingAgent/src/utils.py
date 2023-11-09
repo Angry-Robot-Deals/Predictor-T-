@@ -164,7 +164,7 @@ def load_data(filepath=None, timerange=None):
     return df
 
 
-def load_data_ram(days=100, symbol="BTC/USDT", timeframe="1m", exchange="binance"):
+def load_data_ram(days=0, symbol="BTC/USDT", timeframe="1m", exchange="binance"):
     date_one_day_ago = get_date_before(days)
     try:
         # 1
@@ -274,3 +274,11 @@ def print_action(act: int, agent_positions: list = []):
         print("Sell...")
     else:
         pass
+
+
+async def send_signal(**kwargs):
+    print(str(kwargs))
+
+
+async def send_profit(**kwargs):
+    print(str(kwargs))
