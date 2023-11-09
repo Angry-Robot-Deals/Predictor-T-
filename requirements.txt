@@ -6,3 +6,10 @@ numpy
 matplotlib
 tensorboardX
 python-dotenv
+scikit-learn
+ccxt
+rich
+pyyaml
+databases
+sqlalchemy
+asyncpg
