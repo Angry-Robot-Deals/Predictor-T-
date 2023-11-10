@@ -1,13 +1,18 @@
 # TODO: Add your own settings here
 # default settings
 # ... add your own settings here ...
-symbol: BTC/USDT
+symbols: 
+  - BTC/USDT
+  - ETH/USDT
+  - USDT/BTC
+  - USDT/ETH
+  - USDT/USDC
 sides:
   buy: true
   sell: true
 accuracy: 0.55
 trade:
-  commision: 0.01
+  commision: 0.001
   stoploss: 0.015
   takeprofit: 0.01
   riskrewardratio: 1.5
