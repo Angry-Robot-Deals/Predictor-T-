@@ -4,7 +4,9 @@ from src.Agent import Agent
 from src.Environment import Environment
 
 from src.Config import *
-from src.Database import *
+
+if False:
+    from src.Database import *
 from src.Loader import *
 from src.models import *
 

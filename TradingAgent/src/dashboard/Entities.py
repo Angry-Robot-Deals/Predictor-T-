@@ -5,7 +5,10 @@ from sqlalchemy.ext.declarative import declarative_base
 try:
     from src.dashboard.connection import engine
 except Exception as E:
-    from connection import engine
+    try:
+        from connection import engine
+    except Exception as E:
+        print(E)
 
 Base = declarative_base()
 
