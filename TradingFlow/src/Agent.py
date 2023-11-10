@@ -6,7 +6,7 @@ from tensorboardX import SummaryWriter
 from src.Environment import Environment
 from src.models import ConvDQN, ConvDuelingDQN
 from src.memory.replay import ReplayMemory
-# from src.utils import Transition
+from src.memory.replay import Transition
 import random
 from tqdm import tqdm
 import re
