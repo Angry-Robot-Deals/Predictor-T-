@@ -8,6 +8,9 @@ from tensorboardX import SummaryWriter
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from prettytable import PrettyTable as PrettyTable
 
+from src.memory.replay import ReplayMemory
+
+
 from src.Agent import Agent
 from src.Environment import Environment
 from src.utils import (

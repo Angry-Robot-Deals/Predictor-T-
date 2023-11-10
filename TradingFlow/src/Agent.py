@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 from src.Environment import Environment
 from src.models import ConvDQN, ConvDuelingDQN
-from src.utils import ReplayMemory
-from src.utils import Transition
+from src.memory.replay import ReplayMemory
+# from src.utils import Transition
 import random
 from tqdm import tqdm
 import re

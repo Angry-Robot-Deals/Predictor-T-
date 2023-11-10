@@ -1,7 +1,6 @@
 #  It essentially maps (state, action) pairs to their (next_state, reward) result,
 #  with the state being the current stock price
-from collections import namedtuple
-import random
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,28 +10,6 @@ import sys
 import time
 
 from src.Loader import load_to_memory, get_date_before
-
-Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
-
-
-class ReplayMemory(object):
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-        self.position = 0
-
-    def push(self, *args):
-        """Saves a transition."""
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
-        self.position = (self.position + 1) % self.capacity
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
 
 
 def print_stats(model, value, t):
