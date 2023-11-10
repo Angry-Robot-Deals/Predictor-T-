@@ -1,16 +1,26 @@
 # TODO: Add your own settings here
-# default settings
-# ... add your own settings here ...
 symbols: 
   - BTC/USDT
   - ETH/USDT
   - USDT/BTC
   - USDT/ETH
   - USDT/USDC
+# EXECUTE:
 sides:
   buy: true
   sell: true
-accuracy: 0.55
+metrics:
+  accuracy: 
+    attribute: 0.60
+    window: 
+      from: 24
+      to: 1024
+  rmse:
+    attribute: 0.60
+    window: 
+      from: 24
+      to: 1024
+rounds: 100
 trade:
   commision: 0.001
   stoploss: 0.015
@@ -19,7 +29,7 @@ trade:
 monitoring: 
   enabled: true
   interval: 300
-telegram:
-  token: ""
-  chat_id: ""
-  admin_chat_id: ""
+  telegram:
+    token: ""
+    chat_id: ""
+    admin_chat_id: ""
