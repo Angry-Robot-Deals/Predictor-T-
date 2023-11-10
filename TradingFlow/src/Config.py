@@ -14,7 +14,8 @@ class Settings:
     def __init__(self) -> None:
         self.optimisation = True
         self.scope = settings_yaml.get("symbols" or 'BTC/USDT')
-
+        self.lock = settings_yaml.get("lock" or 'data/temp/.lock')
+        self.FRESH_DAYS = 30
 
 settings = Settings()
 

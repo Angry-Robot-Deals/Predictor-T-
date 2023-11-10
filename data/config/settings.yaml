@@ -1,5 +1,6 @@
 # TODO: Add your own settings here
 # BASE:
+lock: data/temp/.lock
 symbols: 
   - BTC/USDT
   - ETH/USDT

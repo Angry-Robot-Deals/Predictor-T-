@@ -56,7 +56,9 @@ EXCHANGE = "binance"
 class RlEcAg_Predictor:
     def __init__(self, demo: bool = False, **kwargs) -> None:
         if 'symbol' in kwargs:
+            global SYMBOL
             SYMBOL = kwargs.get("symbol")
+            self.symbol = SYMBOL
 
 
         # demo trade
@@ -146,7 +148,7 @@ class RlEcAg_Predictor:
         # For not ready model
         if Train:
             self.profit_train_env = Environment(
-                self.df[self.index : self.index + self.train_size], "profit"
+                self.df[self.index : self.index + self.train_size], "profit", symbol=self.symbol
             )
             self.double_dqn_agent_test = self.double_dqn_agent.train(
                 env=self.profit_train_env,
@@ -161,6 +163,7 @@ class RlEcAg_Predictor:
                 self.profit_test_env = Environment(
                     self.df[self.index + self.train_size : self.index + TRADING_PERIOD],
                     "profit",
+                    symbol=self.symbol,
                 )
                 # Profit Double DQN
                 self.double_dqn_agent_test, _, true_values = self.double_dqn_agent.test(
@@ -191,6 +194,7 @@ class RlEcAg_Predictor:
                         self.df[index + self.train_size : index + TRADING_PERIOD],
                         "profit",
                         remote=False,
+                        symbol=self.symbol
                     )
 
                     # Profit Double DQN
@@ -295,7 +299,7 @@ class RlEcAg_Predictor:
 
                 # load env data
                 profit_demo_env = Environment(
-                    self.df, "profit", remote=True, send_profit_fn=send_profit
+                    self.df, "profit", remote=True, send_profit_fn=send_profit, symbol=self.symbol
                 )
 
                 (
@@ -389,10 +393,10 @@ class RlEcAg_Predictor:
                     break
 
     def trade_train_test(self):
-        agent_predictions.loop(train_test=True)
+        self.loop(train_test=True)
 
     def trade_demo(self):
-        agent_predictions.loop(train_test=False)
+        self.loop(train_test=False)
 
 
 if __name__ == "__main__":

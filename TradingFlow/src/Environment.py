@@ -9,7 +9,7 @@ COMMISION = 0.0
 
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
-    def __init__(self, data, reward, remote=False, send_profit_fn=None):
+    def __init__(self, data, reward, remote=False, send_profit_fn=None, symbol="BTC/USDT"):
         """
         Creates the environment. Note: Before using the environment you must call
         the Environment.reset() method.
@@ -28,6 +28,8 @@ class Environment:
         self.action_number = 0
         self.demo_iterations = 120
         self.last_price = None
+
+        self.symbol = symbol
 
     def reset(self):
         """
@@ -56,7 +58,7 @@ class Environment:
         Environment.step() it will return the next state.
         """
         if self.remote:
-            self.data, self.demo_last_tick = load_data_ram()
+            self.data, self.demo_last_tick = load_data_ram(symbol=self.symbol)
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if not self.done:
