@@ -88,7 +88,7 @@ def make_trade_vector() -> Panel:
     import random as rnd
 
     colors = ["red", "green", "white"]
-    coins = ["DOGE", "SHIB", "SOL","BTC", "USDT" ]
+    coins = ["DOGE", "SHIB", "SOL", "BTC", "USDT"]
 
     for coin in coins[::-1]:
         sponsor_message.add_row(

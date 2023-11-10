@@ -53,6 +53,7 @@ class Item(Base):
     positions = Column(JSON)
     vector = Column(JSON)
 
+
 if False:
     recreate = os.getenv("RECREATE_DB", False)
     if recreate:

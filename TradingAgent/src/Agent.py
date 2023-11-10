@@ -572,17 +572,19 @@ class Agent:
             if fn_signal is not None:
                 import asyncio
                 import json
-                asyncio.run(fn_signal(
-                    timestamp=time.time(),
-                    name='profit_reward_double_ddqn_model_1200m_1ke_BTC|USDT',
-                    positions=env_demo.agent_positions,
-                    side=action.item(),
-                    true=true_value,
-                    price=env_demo.last_price,
-                    vector=vector
-                    ))
 
-            
+                asyncio.run(
+                    fn_signal(
+                        timestamp=time.time(),
+                        name="profit_reward_double_ddqn_model_1200m_1ke_BTC|USDT",
+                        positions=env_demo.agent_positions,
+                        side=action.item(),
+                        true=true_value,
+                        price=env_demo.last_price,
+                        vector=vector,
+                    )
+                )
+
             print("exit state:")
             pprint(vector)
 
@@ -625,10 +627,6 @@ class Agent:
                 raise RuntimeError("Please Provide a valid model name or valid path.")
         else:
             raise RuntimeError("Path can not be None if model Name is not None.")
-
-
-
-
 
     # def load_weights(self, path):
     #     pass
@@ -690,7 +688,6 @@ class Agent:
     #                 vector=vector
     #                 ))
 
-            
     #         print("exit state:")
     #         pprint(vector)
 
@@ -744,15 +741,15 @@ class Agent:
     #     reward_list = [0 for t in range(len(env_demo.data))]
     #     true_values = [0 for t in range(len(env_demo.data))]
     #     self.load_policy(model_name=model_name, path=path)
-    #     print(f'demo for {steps} steps.', ) 
+    #     print(f'demo for {steps} steps.', )
     #     # TODO: it can be better to get state from service and one state in loop (dedupl)
 
     #     for step in tqdm(
     #         range(steps)
-    #     ):  
+    #     ):
     #         print('>>> tick:', step)
     #         # Select and perform an action
-    #         state = env_demo.get_state()     
+    #         state = env_demo.get_state()
     #         action = self.select_action_tensor(state)
     #         reward, done, _ = env_demo.step(action, state)
 
@@ -765,10 +762,10 @@ class Agent:
     #         reward_list[step] = reward.item()
     #         # ...
     #         vector = (
-    #             action.item(), 
-    #             reward.item(), 
-    #             done, 
-    #             true_value, 
+    #             action.item(),
+    #             reward.item(),
+    #             done,
+    #             true_value,
     #             env_demo.agent_positions
     #             )
     #         print('exit state:')
@@ -781,4 +778,4 @@ class Agent:
     #             # ...
     #             break
 
-    #     return cumulative_reward, reward_list, true_values          
+    #     return cumulative_reward, reward_list, true_values

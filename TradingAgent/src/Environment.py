@@ -6,6 +6,7 @@ from src.utils import load_data_ram, show_loader, clean_loader, demo_wait_tick
 
 COMMISION = 0.0
 
+
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
     def __init__(self, data, reward, remote=False, send_profit_fn=None):
@@ -84,7 +85,7 @@ class Environment:
     def step(self, act, state=None):
         # TODO: this function can work differently, it can open sell orders and open buy orders
         # TODO: and exit with take profit and stop loss
-        # TODO: it is strategy, we can change it        
+        # TODO: it is strategy, we can change it
         """
         Perform the action of the Agent on the environment, computes the reward
         and update some datastructures to keep track of some econometric indexes
@@ -153,7 +154,7 @@ class Environment:
                     if self.remote:
                         print("Sell position:", state, "at", self.action_number)
                         print("Profits: ", profits)
-                    self.agent_positions = []                    
+                    self.agent_positions = []
                 else:
                     pass
                 # reward += profits
@@ -161,8 +162,8 @@ class Environment:
         execute_action(act)
 
         if self.remote:
-            # while self.demo_wait_tick(self.demo_last_tick):            
-            while demo_wait_tick(self.demo_last_tick):            
+            # while self.demo_wait_tick(self.demo_last_tick):
+            while demo_wait_tick(self.demo_last_tick):
                 show_loader()
             clean_loader()
 
@@ -173,7 +174,7 @@ class Environment:
             state = self.data.iloc[-1, :]["Close"]
             self.last_price = state
             print("Updated data for last tick:", last_tick, "last price:", state)
-        
+
         # TRAIN & TEST
         else:
             state = self.data.iloc[self.tick, :]["Close"]
@@ -211,10 +212,10 @@ class Environment:
 
         # TODO: extract it in utils
         if self.remote:
-            print('.........')
-            print('Profit: ', sum(self.profits))
-            print('Value:', self.agent_open_position_value)
-            print('.........')
+            print(".........")
+            print("Profit: ", sum(self.profits))
+            print("Value:", self.agent_open_position_value)
+            print(".........")
 
         # UPDATE THE STATE FOR NEXT TICK
         # TODO: solve remote or not attribute for demo

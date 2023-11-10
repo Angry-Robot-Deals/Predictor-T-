@@ -17,11 +17,11 @@ database = Database(DATABASE_URL)
 
 # Создание таблицы в базе данных (если её нет)
 
+
 async def create_item(item_name):
     async with database.transaction():
         query = Item.__table__.insert().values(name=item_name)
         await database.execute(query)
-
 
 
 async def main():

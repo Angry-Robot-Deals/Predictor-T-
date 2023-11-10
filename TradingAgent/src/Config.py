@@ -2,9 +2,7 @@ import os
 import dotenv
 import yaml
 
-dotenv.load_dotenv(
-    "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/.env"
-)
+dotenv.load_dotenv("/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/.env")
 
 HOST = os.getenv("DB_HOST")
 PORT = os.getenv("DB_PORT")
@@ -13,7 +11,7 @@ USER = os.getenv("DB_USER")
 PASS = os.getenv("DB_PASS")
 SCHEMA = os.getenv("DB_SCHEMA")
 
-COMMISION = 0.0
+COMMISION = 0.001
 
 SETTINGS = os.getenv("SETTINGS")
 
