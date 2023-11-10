@@ -1,4 +1,5 @@
 # TODO: Add your own settings here
+# BASE:
 symbols: 
   - BTC/USDT
   - ETH/USDT
@@ -6,6 +7,9 @@ symbols:
   - USDT/ETH
   - USDT/USDC
 # EXECUTE:
+models:
+  - dqns
+  - lstms
 sides:
   buy: true
   sell: true
@@ -33,3 +37,10 @@ monitoring:
     token: ""
     chat_id: ""
     admin_chat_id: ""
+  database:
+    enabled: false
+    host: ""
+    port: ""
+    user: ""
+    password: ""
+    database: ""
