@@ -533,17 +533,18 @@ class Agent:
         steps=100,
         fn_signal=None,
     ):
-        cumulative_reward = [0 for t in range(len(env_demo.data))]
-        reward_list = [0 for t in range(len(env_demo.data))]
-        true_values = [0 for t in range(len(env_demo.data))]
+        cumulative_reward = [0 for t in range(steps)]
+        reward_list = [0 for t in range(steps)]
+        true_values = [0 for t in range(steps)]
         self.load_policy(model_name=model_name, path=path)
+        # todo: where memory?
         print(
-            f"demo for {steps} steps.",
+            f"trade on `{env_demo.symbol}` demo for {steps} steps.",
         )
         # TODO: it can be better to get state from service and one state in loop (dedupl)
 
         for step in tqdm(range(steps)):
-            print(">>> tick:", step)
+            print(f"[{env_demo.symbol}] >>> tick:", step)
             # Select and perform an action
             state = env_demo.get_state()
             action = self.select_action_tensor(state)

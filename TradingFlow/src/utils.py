@@ -189,6 +189,7 @@ def load_data_ram(days=0, symbol="BTC/USDT", timeframe="1m", exchange="binance")
     formatted_time = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
 
     print(
+        f"{symbol}",
         "Last server tick",
         formatted_time,
         "with `Close` price",

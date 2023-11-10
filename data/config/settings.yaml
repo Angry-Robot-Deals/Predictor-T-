@@ -4,6 +4,7 @@ lock: data/temp/.lock
 symbols: 
   - BTC/USDT
   - ETH/USDT
+  - XRP/USDT
 # EXECUTE:
 models:
   - dqns

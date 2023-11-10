@@ -8,7 +8,6 @@ from tensorboardX import SummaryWriter
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from prettytable import PrettyTable as PrettyTable
 
-from src.memory.replay import ReplayMemory
 
 
 from src.Agent import Agent
@@ -19,13 +18,11 @@ from src.utils import (
     load_data_ram,
 )
 from dotenv import load_dotenv
-from src.Config import settings_yaml
 
 if False:
     from src.Database import send_signal, send_profit
 else:
     from src.utils import send_signal, send_profit
-import asyncio
 
 
 # to yaml / .env config [w4]
@@ -45,8 +42,8 @@ TEST_SIMULATIONS = 1000
 TEST_APPROVE_ACCURACY = 0.6
 
 DEMO_PRELOAD_DAYS = 0  # 0 - current last 1000 candles
-DEMO_ITERATIONS = 100
-DEMO_CLIENTS = 1
+DEMO_ITERATIONS = TRADING_PERIOD
+DEMO_CLIENTS = 1 # this needed for balancing
 
 SYMBOL = "BTC/USDT"
 TIMEFRAME = "1m"
@@ -395,7 +392,7 @@ class RlEcAg_Predictor:
     def trade_train_test(self):
         self.loop(train_test=True)
 
-    def trade_demo(self):
+    def agent_demo(self):
         self.loop(train_test=False)
 
 

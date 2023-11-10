@@ -30,7 +30,7 @@ console = Console()
 # 3. hypertune in memory out tuned model
 # 4. demo in model out demo results
 # 5. trade in model out trade results
-
+os.system("clear")
 
 class Tradee:
     def __init__(self, symbol) -> None:
@@ -58,6 +58,7 @@ class Tradee:
         # agent
         self.symbol = symbol
         self.price_predictor = None
+        self.wallet = None
 
 
     def test(self, **kwargs):
@@ -103,9 +104,9 @@ class Tradee:
             "symbol": self.symbol,
         }
 
-    def demo(self, **kwargs):
-        console.log("demo")
-        self.price_predictor.trade_demo()
+    def flow_demo(self, **kwargs):
+        console.log(f"demo: {self.symbol}")
+        self.price_predictor.agent_demo()
         return {
             "step": "demo",
             "state": "done",
@@ -138,7 +139,7 @@ class Tradee:
             evaluated = self.eval()
             console.log(str(evaluated))
 
-        demostrated = self.demo()
+        demostrated = self.flow_demo()
         console.log(str(demostrated))
 
     def check_model_state(self):
@@ -180,7 +181,7 @@ def proceed_tradee(symbol):
 def main():
     pprint(settings.__dict__)
 
-    free_processors_count = int(os.cpu_count() / 4)
+    free_processors_count = int(os.cpu_count() / 2)
     max_threads = free_processors_count
     console.log("free processors count:", int(free_processors_count))
 
@@ -197,4 +198,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as E:
+        console.log(E)

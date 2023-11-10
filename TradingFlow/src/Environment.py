@@ -172,10 +172,10 @@ class Environment:
         reward = 0
         # GET CURRENT STATE
         if self.remote:
-            self.data, last_tick = load_data_ram()
+            self.data, last_tick = load_data_ram(symbol=self.symbol)
             state = self.data.iloc[-1, :]["Close"]
             self.last_price = state
-            print("Updated data for last tick:", last_tick, "last price:", state)
+            print(f"{self.symbol} - updated data for last tick:", last_tick, "last price:", state)
 
         # TRAIN & TEST
         else:
@@ -214,6 +214,7 @@ class Environment:
 
         # TODO: extract it in utils
         if self.remote:
+            print(f"### {self.symbol} ###")
             print(".........")
             print("Profit: ", sum(self.profits))
             print("Value:", self.agent_open_position_value)
