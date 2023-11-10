@@ -19,7 +19,7 @@ from src.utils import (
     load_data_ram,
 )
 from dotenv import load_dotenv
-from src.Config import settings
+from src.Config import settings_yaml
 
 if False:
     from src.Database import send_signal, send_profit

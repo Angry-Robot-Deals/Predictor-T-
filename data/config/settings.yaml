@@ -20,12 +20,12 @@ metrics:
     attribute: 0.60
     window: 
       from: 24
-      to: 1024
+      to: 600
   rmse:
     attribute: 0.60
     window: 
       from: 24
-      to: 1024
+      to: 600
 rounds: 100
 trade:
   commision: 0.001
@@ -39,10 +39,21 @@ monitoring:
     token: ""
     chat_id: ""
     admin_chat_id: ""
-  database:
-    enabled: false
-    host: ""
-    port: ""
-    user: ""
-    password: ""
-    database: ""
+  db:
+    - name: "angry_bots"
+      enabled: false
+      host: ""
+      port: ""
+      user: ""
+      password: ""
+      database: ""
+      schema: ""
+  blockchain:
+    - name: ""
+      enabled: false
+      rpc:
+        host: ""
+        port: ""
+        user: ""
+        password: ""
+        ssl: false

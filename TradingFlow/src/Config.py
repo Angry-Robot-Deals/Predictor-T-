@@ -4,17 +4,23 @@ import yaml
 
 dotenv.load_dotenv("/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/.env")
 
-HOST = os.getenv("DB_HOST")
-PORT = os.getenv("DB_PORT")
-NAME = os.getenv("DB_NAME")
-USER = os.getenv("DB_USER")
-PASS = os.getenv("DB_PASS")
-SCHEMA = os.getenv("DB_SCHEMA")
+SETTINGS_PATH = os.getenv("SETTINGS" or '../config/settings.yaml')
 
-COMMISION = 0.001
+settings_yaml = None
+with open(SETTINGS_PATH, "r") as file:
+    settings_yaml = yaml.safe_load(file)
 
-SETTINGS = os.getenv("SETTINGS")
+class Settings:
+    def __init__(self) -> None:
+        self.optimisation = True
+        self.scope = settings_yaml.get("symbols" or 'BTC/USDT')
 
-settings = None
-# with open(SETTINGS, 'r') as file:
-#     settings = yaml.safe_load(file)
+
+settings = Settings()
+
+HOST = os.getenv("DB_HOST" or settings.db.host)
+PORT = os.getenv("DB_PORT" or settings.db.port)
+NAME = os.getenv("DB_NAME" or settings.db.name)
+USER = os.getenv("DB_USER" or settings.db.user)
+PASS = os.getenv("DB_PASS" or settings.db.pwd)
+SCHEMA = os.getenv("DB_SCHEMA" or settings.db.schema)

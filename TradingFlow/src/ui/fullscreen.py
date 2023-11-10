@@ -203,7 +203,7 @@ def make_table(side="Sell") -> Table:
     return table
 
 
-def demo():
+def demo(**kwargs):
     job_progress = Progress(
         "{task.description}",
         SpinnerColumn(),
