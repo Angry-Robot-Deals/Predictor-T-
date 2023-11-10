@@ -3,9 +3,6 @@
 symbols: 
   - BTC/USDT
   - ETH/USDT
-  - USDT/BTC
-  - USDT/ETH
-  - USDT/USDC
 # EXECUTE:
 models:
   - dqns

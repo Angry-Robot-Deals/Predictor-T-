@@ -54,7 +54,11 @@ EXCHANGE = "binance"
 
 
 class RlEcAg_Predictor:
-    def __init__(self, demo: bool = False) -> None:
+    def __init__(self, demo: bool = False, **kwargs) -> None:
+        if 'symbol' in kwargs:
+            SYMBOL = kwargs.get("symbol")
+
+
         # demo trade
         self.demo = demo
 
@@ -82,6 +86,8 @@ class RlEcAg_Predictor:
         self.writer = SummaryWriter(
             log_dir=TENSORBOARD_LOGS_DIR
         )  # You can customize the log directory
+
+        print(self.__dict__)
 
     def init_data(self, ticker, timeframe, exchange, remote=True) -> pd.DataFrame:
         # it can be replace for train data loader from open api or ccxt
