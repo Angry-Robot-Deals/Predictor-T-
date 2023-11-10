@@ -8,7 +8,7 @@
             "name": "XAT",
             "type": "python",
             "request": "launch",
-            "program": "TradingAgent/agent.py",
+            "program": "TradingFlow/agent.py",
             "autoReload": {
                 "enabled": true
             },
