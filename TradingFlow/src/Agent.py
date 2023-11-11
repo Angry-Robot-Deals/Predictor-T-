@@ -134,6 +134,9 @@ class Agent:
             self.writer.add_scalar(
                 "Select Action Epsilon", eps_threshold, self.steps_done
             )
+        else:
+            print("Select Action Epsilon", eps_threshold, self.steps_done)
+
 
         self.steps_done += 1
         # [Exploitation] pick the best action according to current Q approx.

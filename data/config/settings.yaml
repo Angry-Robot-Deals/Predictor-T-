@@ -5,6 +5,7 @@ symbols:
   - BTC/USDT
   - ETH/USDT
   - XRP/USDT
+  - BNB/USDT
 # EXECUTE:
 models:
   - dqns

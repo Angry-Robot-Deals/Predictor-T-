@@ -4,12 +4,12 @@ import datetime
 import time
 from src.utils import load_data_ram, show_loader, clean_loader, demo_wait_tick
 
-COMMISION = 0.0
-
+# TODO: for different exchanges
+COMMISION = 0.001
 
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
-    def __init__(self, data, reward, remote=False, send_profit_fn=None, symbol="BTC/USDT"):
+    def __init__(self, data, reward, remote=False, send_profit_fn=None, symbol="BTC/USDT", steps=600):
         """
         Creates the environment. Note: Before using the environment you must call
         the Environment.reset() method.
@@ -26,7 +26,7 @@ class Environment:
         self.reset()
 
         self.action_number = 0
-        self.demo_iterations = 120
+        self.demo_iterations = steps
         self.last_price = None
 
         self.symbol = symbol
@@ -181,10 +181,10 @@ class Environment:
         else:
             state = self.data.iloc[self.tick, :]["Close"]
 
+        # TO CHECK if the calculus is correct according to the definition
         self.agent_open_position_value = 0
         for position in self.agent_positions:
             self.agent_open_position_value += state - position - COMMISION
-            # TO CHECK if the calculus is correct according to the definition
             if self.remote:
                 self.cumulative_return[self.action_number] += (
                     position - self.last_price
@@ -212,16 +212,10 @@ class Environment:
         if sell_nothing and (reward > -5):
             reward = -5
 
-        # TODO: extract it in utils
-        if self.remote:
-            print(f"### {self.symbol} ###")
-            print(".........")
-            print("Profit: ", sum(self.profits))
-            print("Value:", self.agent_open_position_value)
-            print(".........")
 
-        # UPDATE THE STATE FOR NEXT TICK
+
         # TODO: solve remote or not attribute for demo
+        # UPDATE THE STATE FOR NEXT TICK
         if not self.remote:
             self.tick += 1  # self.t - tick
             if self.tick == len(self.data) - 1:
@@ -229,8 +223,18 @@ class Environment:
         else:
             self.action_number += 1
             if self.action_number == self.demo_iterations:
-                self.done = True
-                # todo: check if it is ok for closing all open positions
+                # todo: check if it is ok for closing all open positions                
+                self.done = True                
+                self.profits += self.agent_open_position_value
+
+
+        # TODO: extract it in utils
+        if self.remote:
+            print(f"### {self.symbol} ###")
+            print(".........")
+            print("Profit: ", sum(self.profits))
+            print("Value:", self.agent_open_position_value)
+            print(".........")
 
         return (
             torch.tensor([reward], device=device, dtype=torch.float),

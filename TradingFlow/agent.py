@@ -34,7 +34,7 @@ TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
 SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
-TRADING_PERIOD = 600
+TRADING_PERIOD = 3
 TRAIN_EPOCHS = 20000
 TRAIN_DAYS = 365
 
@@ -145,7 +145,7 @@ class RlEcAg_Predictor:
         # For not ready model
         if Train:
             self.profit_train_env = Environment(
-                self.df[self.index : self.index + self.train_size], "profit", symbol=self.symbol
+                self.df[self.index : self.index + self.train_size], "profit", symbol=self.symbol, steps=DEMO_ITERATIONS
             )
             self.double_dqn_agent_test = self.double_dqn_agent.train(
                 env=self.profit_train_env,
@@ -296,7 +296,12 @@ class RlEcAg_Predictor:
 
                 # load env data
                 profit_demo_env = Environment(
-                    self.df, "profit", remote=True, send_profit_fn=send_profit, symbol=self.symbol
+                    self.df, 
+                    "profit", 
+                    remote=True, 
+                    send_profit_fn=send_profit, 
+                    symbol=self.symbol, 
+                    steps=DEMO_ITERATIONS
                 )
 
                 (
