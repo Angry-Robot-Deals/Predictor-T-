@@ -547,8 +547,8 @@ class Agent:
         )
         # TODO: it can be better to get state from service and one state in loop (dedupl)
 
-        for step in tqdm(range(steps)):
-            print(f"[{env_demo.symbol}] >>> tick:", step)
+        for stp in tqdm(range(steps)):
+            print(f"[{env_demo.symbol}] >>> tick:", stp)
             # Select and perform an action
             state = env_demo.get_state()
             action = self.select_action_tensor(state)
@@ -556,13 +556,13 @@ class Agent:
 
             # Collect reward and true value
             true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
-            true_values[step] = true_value
-            cumulative_reward[step] += (
-                reward.item() + cumulative_reward[step - 1 if step - 1 > 0 else 0]
+            true_values[stp] = true_value
+            cumulative_reward[stp] += (
+                reward.item() + cumulative_reward[stp - 1 if stp - 1 > 0 else 0]
             )
 
             # reward list
-            reward_list[step] = reward.item()
+            reward_list[stp] = reward.item()
 
             # ...
             vector = (

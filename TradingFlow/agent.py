@@ -56,7 +56,8 @@ class RlEcAg_Predictor:
             global SYMBOL
             SYMBOL = kwargs.get("symbol")
             self.symbol = SYMBOL
-
+        else:
+            self.symbol = SYMBOL
 
         # demo trade
         self.demo = demo
@@ -407,4 +408,4 @@ if __name__ == "__main__":
     # pipeline
     # agent_predictions.trade_train_test()
     # production
-    agent_predictions.trade_demo()
+    agent_predictions.agent_demo()

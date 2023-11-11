@@ -222,7 +222,7 @@ class Environment:
             if self.action_number == self.demo_iterations:
                 # todo: check if it is ok for closing all open positions                
                 self.done = True                
-                self.profits += self.agent_open_position_value
+                # self.profits += self.agent_open_position_value
 
 
         # TODO: extract it in utils
