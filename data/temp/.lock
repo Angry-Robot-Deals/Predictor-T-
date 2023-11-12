@@ -5,6 +5,8 @@
         "created_at": "2023-11-07T00:00:00+00:00",
         "updated_at": "2023-11-07T00:00:00+00:00",
         "file_path": "data/resources/test/profit_reward_double_ddqn_model_600m_20ke",
+        "memory": {
+        },        
         "metrics": {
             "accuracy": 0.60,
             "precision": 0.60,
@@ -13,10 +15,12 @@
     },
     "ETH/USDT": {
         "symbol": "ETH/USDT",
-        "run": false,
+        "run": true,
         "created_at": "2023-11-07T00:00:00+00:00",
         "updated_at": "2023-11-07T00:00:00+00:00",
         "file_path": "data/resources/test/profit_reward_double_ddqn_model_600m_20ke",
+        "memory": {
+        },        
         "metrics": {
             "accuracy": 0.60,
             "precision": 0.60,
@@ -25,10 +29,12 @@
     },
     "XRP/USDT": {
         "symbol": "XRP/USDT",
-        "run": false,
+        "run": true,
         "created_at": "2023-11-07T00:00:00+00:00",
         "updated_at": "2023-11-07T00:00:00+00:00",
         "file_path": "data/resources/test/profit_reward_double_ddqn_model_600m_20ke",
+        "memory": {
+        },
         "metrics": {
             "accuracy": 0.60,
             "precision": 0.60,
@@ -37,10 +43,12 @@
     },
     "BNB/USDT": {
         "symbol": "XRP/USDT",
-        "run": false,
+        "run": true,
         "created_at": "2023-11-07T00:00:00+00:00",
         "updated_at": "2023-11-07T00:00:00+00:00",
         "file_path": "data/resources/test/profit_reward_double_ddqn_model_600m_20ke",
+        "memory": {
+        },        
         "metrics": {
             "accuracy": 0.60,
             "precision": 0.60,

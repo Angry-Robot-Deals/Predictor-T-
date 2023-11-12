@@ -9,6 +9,7 @@ import datetime
 import sys
 import time
 
+
 from src.Loader import load_to_memory, get_date_before
 
 
@@ -260,3 +261,36 @@ async def send_signal(**kwargs):
 
 async def send_profit(**kwargs):
     print(str(kwargs))
+
+
+def check_model_state(symbol, settings=None):
+    import json
+    from datetime import datetime, timedelta
+    import pytz
+
+    lock_file = settings.lock
+
+    def read_json_file(file_path):
+        with open(file_path, 'r') as file:
+            json_object = json.load(file)
+        return json_object
+    
+    locks = read_json_file(lock_file)
+    task_state = locks.get(symbol)
+    # is run
+    run = task_state.get("run" or False)
+    # is exist
+    file_path = task_state.get("file_path" or None)
+    exist = os.path.exists(file_path)
+    # is fresh
+    def check_updated_at(saved_at):
+        current_datetime = datetime.now()
+        thirty_days_before = current_datetime - timedelta(days=settings.FRESH_DAYS)   
+        updated_at = datetime.fromisoformat(saved_at)
+        timezone = pytz.timezone("UTC")  
+        aware_datetime = thirty_days_before.replace(tzinfo=timezone)
+        return aware_datetime < updated_at
+    
+    updated = task_state.get("updated_at")
+    fresh = check_updated_at(updated)
+    return run, exist, fresh

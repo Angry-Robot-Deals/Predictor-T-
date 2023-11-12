@@ -8,6 +8,7 @@ from tensorboardX import SummaryWriter
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from prettytable import PrettyTable as PrettyTable
 
+from src.Config import settings
 
 
 from src.Agent import Agent
@@ -405,6 +406,7 @@ class RlEcAg_Predictor:
 if __name__ == "__main__":
     # init agent
     agent_predictions = RlEcAg_Predictor(demo=True)
+    print(settings)
     # pipeline
     # agent_predictions.trade_train_test()
     # production
