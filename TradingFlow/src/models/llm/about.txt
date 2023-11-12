@@ -1,0 +1,7 @@
+# about LLMS in trading ...
+# ....
+# transformes may be used for prediction prices: 
+# https://keras.io/examples/timeseries/timeseries_transformer_classification/
+# fingpt.py here only for reference to project
+# but how it can be used for HFT?
+# if you had answer https://t.me/xsa_dev 👈

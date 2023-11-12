@@ -1,0 +1,59 @@
+# TODO: Add your own settings here
+# BASE:
+lock: data/temp/.lock
+symbols: 
+  - BTC/USDT
+  - ETH/USDT
+  - XRP/USDT
+  - BNB/USDT
+# EXECUTE:
+models:
+  - dqns
+  - lstms
+  - txs
+  - llms
+sides:
+  buy: true
+  sell: true
+metrics:
+  accuracy: 
+    attribute: 0.60
+    window: 
+      from: 24
+      to: 600
+  rmse:
+    attribute: 0.60
+    window: 
+      from: 24
+      to: 600
+rounds: 100
+trade:
+  commision: 0.001
+  stoploss: 0.015
+  takeprofit: 0.01
+  riskrewardratio: 1.5
+monitoring: 
+  enabled: true
+  interval: 300
+  telegram:
+    token: ""
+    chat_id: ""
+    admin_chat_id: ""
+  db:
+    - name: "angry_bots"
+      enabled: false
+      host: ""
+      port: ""
+      user: ""
+      password: ""
+      database: ""
+      schema: ""
+  blockchain:
+    - name: ""
+      enabled: false
+      rpc:
+        host: ""
+        port: ""
+        user: ""
+        password: ""
+        ssl: false

@@ -8,13 +8,26 @@
             "name": "XAT",
             "type": "python",
             "request": "launch",
-            "program": "TradingAgent/agent.py",
+            "program": "TradingFlow/agent.py",
             "autoReload": {
                 "enabled": true
             },
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true
-        }
+        },
+        {
+            "name": "PIPE",
+            "type": "python",
+            "request": "launch",
+            "program": "TradingFlow/main.py",
+            "autoReload": {
+                "enabled": true
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env"
+        }        
     ]
 }
