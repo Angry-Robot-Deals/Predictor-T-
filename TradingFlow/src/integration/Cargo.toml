@@ -12,5 +12,7 @@ crate-type = ["cdylib"]
 pyo3 = "0.19.0"
 tokio = "1.34.0"
 serde_json = "1.0.108"
+pyo3-asyncio = { version = "0.19.0", features = ["attributes", "async-std-runtime"] }
+async-std = "1.9"
 
 ccxt = { git = "https://github.com/kizzx2/ccxt-rs-lib" }
