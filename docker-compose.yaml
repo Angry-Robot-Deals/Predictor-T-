@@ -1,10 +1,10 @@
 version: '3'
 services:
-  my-python-app:
+  rl-trade-bot-torch:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rl-trade-bot-torch
+    container_name: rl-trade-bot-torch-demo
     env_file:
       - .env    
     restart: always

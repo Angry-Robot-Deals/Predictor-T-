@@ -602,37 +602,6 @@ class Agent:
 
         return cumulative_reward, reward_list, true_values
 
-    def load_policy(self, model_name=None, path=None):
-        # raise exceptions
-        if model_name is None:
-            pass
-
-        elif path is not None:
-            if re.match(".*_dqn_.*", model_name):
-                self.policy_net = ConvDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
-                    self.device
-                )
-                if str(self.device) == "cuda":
-                    self.policy_net.load_state_dict(torch.load(path))
-                else:
-                    self.policy_net.load_state_dict(
-                        torch.load(path, map_location=torch.device("cpu"))
-                    )
-            elif re.match(".*_ddqn_.*", model_name):
-                self.policy_net = ConvDuelingDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
-                    self.device
-                )
-                if str(self.device) == "cuda":
-                    self.policy_net.load_state_dict(torch.load(path))
-                else:
-                    self.policy_net.load_state_dict(
-                        torch.load(path, map_location="cpu")
-                    )
-            else:
-                raise RuntimeError("Please Provide a valid model name or valid path.")
-        else:
-            raise RuntimeError("Path can not be None if model Name is not None.")
-
     # def load_weights(self, path):
     #     pass
 
