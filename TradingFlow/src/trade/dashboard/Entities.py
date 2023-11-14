@@ -1,14 +1,15 @@
+from datetime import datetime
 import os
 from sqlalchemy import Column, Integer, String, Float, JSON, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
 try:
-    from src.dashboard.connection import engine
-except Exception as E:
+    from src.trade.dashboard.connection import engine
+except ImportError:
     try:
         from connection import engine
-    except Exception as E:
-        print(E)
+    except ImportError:
+        print("Failed to import the 'engine' object from the connection module.")
 
 Base = declarative_base()
 
@@ -54,8 +55,21 @@ class Item(Base):
     vector = Column(JSON)
 
 
+class Stats(Base):
+    __tablename__ = "stats"
+    __table_args__ = {"schema": "ml"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(Float, default=datetime.now().timestamp())
+    name = Column(String, index=True)
+    means = Column(JSON)
+    profit_usdt = Column(Float)
+    volume = Column(Float)
+    positions = Column(JSON)
+
+
 if False:
     recreate = os.getenv("RECREATE_DB", False)
     if recreate:
         Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)

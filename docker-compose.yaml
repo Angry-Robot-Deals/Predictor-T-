@@ -4,12 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: my-python-app-image
-    container_name: my-python-app-container
-    environment:
-      - IN_DOCKER=True
-    ports:
-      - "6006:6006"  
-    volumes:
-      - ./app:/app 
+    container_name: rl-trade-bot-torch
+    env_file:
+      - .env    
     restart: always

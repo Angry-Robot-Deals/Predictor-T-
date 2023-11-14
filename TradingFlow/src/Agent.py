@@ -581,7 +581,7 @@ class Agent:
                 asyncio.run(
                     fn_signal(
                         timestamp=time.time(),
-                        name="profit_reward_double_ddqn_model_1200m_1ke_BTC|USDT",
+                        name="profit_reward_double_ddqn_model_600m_20ke",
                         positions=env_demo.agent_positions,
                         side=action.item(),
                         true=true_value,

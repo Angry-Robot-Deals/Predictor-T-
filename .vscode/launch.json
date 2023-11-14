@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
+            // single agent trading
             "name": "XAT",
             "type": "python",
             "request": "launch",
@@ -14,9 +15,11 @@
             },
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env"            
         },
         {
+            // group of agents trading
             "name": "PIPE",
             "type": "python",
             "request": "launch",

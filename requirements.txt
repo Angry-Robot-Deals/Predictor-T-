@@ -13,3 +13,4 @@ pyyaml
 databases
 sqlalchemy
 asyncpg
+psycopg2-binary

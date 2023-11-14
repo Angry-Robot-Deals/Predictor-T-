@@ -16,6 +16,7 @@ class Settings:
         self.scope = settings_yaml.get("symbols" or 'BTC/USDT')
         self.lock = settings_yaml.get("lock" or 'data/temp/.lock')
         self.FRESH_DAYS = 30
+        self.monitoring = settings_yaml.get("monitoring" or {})
 
 settings = Settings()
 
