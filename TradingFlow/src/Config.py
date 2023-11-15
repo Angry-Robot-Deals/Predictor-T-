@@ -17,6 +17,7 @@ class Settings:
         self.lock = settings_yaml.get("lock" or 'data/temp/.lock')
         self.FRESH_DAYS = 30
         self.monitoring = settings_yaml.get("monitoring" or {})
+        self.rest = bool(os.getenv("REST_ENDPOINTS" or False))
 
 settings = Settings()
 

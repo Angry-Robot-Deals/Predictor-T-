@@ -117,6 +117,10 @@ class Agent:
         self.steps_done = 0
         self.training_cumulative_reward = []
         self.remote = True
+        self.predicted_action = None
+        self.env_vector = None
+        self.env_last_tick = None
+        self.env_last_price = None
 
     def select_action_tensor(self, state):
         """the epsilon-greedy action selection"""
@@ -321,65 +325,6 @@ class Agent:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-    # def optimize_double_dqn_model(self):
-    #     if len(self.memory) < self.BATCH_SIZE:
-    #         return
-    #     transitions = self.memory.sample(self.BATCH_SIZE)
-    #     batch = Transition(*zip(*transitions))
-    #     non_final_mask = torch.tensor(
-    #         tuple(map(lambda s: s is not None, batch.next_state)),
-    #         device=self.device,
-    #         dtype=torch.bool,
-    #     )
-    #     nfns = [s for s in batch.next_state if s is not None]
-    #     non_final_next_states = torch.cat(nfns).view(len(nfns), -1)
-    #     non_final_next_states = non_final_next_states.unsqueeze(1)
-
-    #     # Modify the state_batch to include both "Close" and "Target"
-    #     state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1, 2)
-    #     state_batch = state_batch.unsqueeze(1)
-    #     action_batch = torch.cat(batch.action).view(self.BATCH_SIZE, -1)
-    #     reward_batch = torch.cat(batch.reward).view(self.BATCH_SIZE, -1)
-
-    #     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
-    #     # columns of actions taken. These are the actions which would've been taken
-    #     # for each batch state according to policy_net
-    #     state_action_values = self.policy_net(state_batch).gather(1, action_batch)
-
-    #     # ---------- D-DQN Extra Line---------------
-    #     _, next_state_action = self.policy_net(state_batch).max(1, keepdim=True)
-
-    #     # Compute V(s_{t+1}) for all next states.
-    #     # Expected values of actions for non_final_next_states are computed based
-    #     # on the actions given by policynet.
-    #     # This is merged based on the mask, such that we'll have either the expected
-    #     # state value or 0 in case the state was final.
-    #     # detach removes the tensor from the graph -> no gradient computation is
-    #     # required
-    #     next_state_values = torch.zeros(self.BATCH_SIZE, device=self.device).view(
-    #         self.BATCH_SIZE, -1
-    #     )
-
-    #     out = self.target_net(non_final_next_states)
-    #     next_state_values[non_final_mask] = out.gather(
-    #         1, next_state_action[non_final_mask]
-    #     )
-    #     # next_state_values = next_state_values.view(self.BATCH_SIZE, -1)
-    #     # Compute the expected Q values
-    #     expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
-
-    #     # Compute MSE loss
-    #     loss = F.mse_loss(state_action_values, expected_state_action_values)
-
-    #     self.writer.add_scalar("Loss", loss, self.steps_done)
-
-    #     # Optimize the model
-    #     self.optimizer.zero_grad()
-    #     loss.backward()
-    #     for param in self.policy_net.parameters():
-    #         param.grad.data.clamp_(-1, 1)
-    #     self.optimizer.step()
-
     def train(self, env, path, num_episodes=100):
         self.TRAINING = True
         cumulative_reward = [0 for t in range(num_episodes)]
@@ -529,6 +474,24 @@ class Agent:
     def load_weights(self, path):
         pass
 
+
+    def demo_run_rest(self):
+        import threading
+        from src.trade.endpoint.main import app, run
+        
+        def run_threaded():
+            # Your code here
+            run(agent=self)
+
+        # Create and start the thread
+        thread = threading.Thread(target=run_threaded)
+        thread.start()        
+
+    def demo_endpoint(self):
+        # TODO: what will be achitecture of request?
+        state = self.state
+        self.predicted_action_exec = self.select_action_tensor(state)
+
     def demo(
         self,
         env_demo: Environment,
@@ -551,7 +514,17 @@ class Agent:
             print(f"[{env_demo.symbol}] >>> tick:", stp)
             # Select and perform an action
             state = env_demo.get_state()
+            if self.remote:
+                self.env_vector = env_demo.data
+                self.env_last_price = env_demo.last_price
+                self.env_last_tick = env_demo.demo_last_tick
+
             action = self.select_action_tensor(state)
+
+            if self.remote:
+                self.predicted_action = action
+                
+            
             reward, done, _ = env_demo.step(action, state)
 
             # Collect reward and true value
@@ -601,155 +574,3 @@ class Agent:
                 break
 
         return cumulative_reward, reward_list, true_values
-
-    # def load_weights(self, path):
-    #     pass
-
-    # def demo(
-    #     self,
-    #     env_demo: Environment,
-    #     model_name=None,
-    #     path=None,
-    #     steps=100,
-    #     fn_signal=None,
-    # ):
-    #     cumulative_reward = [0 for t in range(len(env_demo.data))]
-    #     reward_list = [0 for t in range(len(env_demo.data))]
-    #     true_values = [0 for t in range(len(env_demo.data))]
-    #     self.load_policy(model_name=model_name, path=path)
-    #     print(
-    #         f"demo for {steps} steps.",
-    #     )
-    #     # TODO: it can be better to get state from service and one state in loop (dedupl)
-
-    #     for step in tqdm(range(steps)):
-    #         print(">>> tick:", step)
-    #         # Select and perform an action
-    #         state = env_demo.get_state()
-    #         action = self.select_action_tensor(state)
-    #         reward, done, _ = env_demo.step(action, state)
-
-    #         # Collect reward and true value
-    #         true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
-    #         true_values[step] = true_value
-    #         cumulative_reward[step] += (
-    #             reward.item() + cumulative_reward[step - 1 if step - 1 > 0 else 0]
-    #         )
-
-    #         # reward list
-    #         reward_list[step] = reward.item()
-
-    #         # ...
-    #         vector = (
-    #             action.item(),
-    #             reward.item(),
-    #             done,
-    #             true_value,
-    #             env_demo.agent_positions,
-    #         )
-
-    #         # send signal
-    #         if fn_signal is not None:
-    #             import asyncio
-    #             import json
-    #             asyncio.run(fn_signal(
-    #                 timestamp=time.time(),
-    #                 name='profit_reward_double_ddqn_model_1200m_1ke_BTC|USDT',
-    #                 positions=env_demo.agent_positions,
-    #                 side=action.item(),
-    #                 true=true_value,
-    #                 price=env_demo.last_price,
-    #                 vector=vector
-    #                 ))
-
-    #         print("exit state:")
-    #         pprint(vector)
-
-    #         # Load next state
-    #         # next_state = env_demo.get_state()
-    #         # state = next_state
-    #         if done:
-    #             # ...
-    #             break
-
-    #     return cumulative_reward, reward_list, true_values
-
-    # def load_policy(self, model_name=None, path=None):
-    #     # raise exceptions
-    #     if model_name is None:
-    #         pass
-
-    #     elif path is not None:
-    #         if re.match(".*_dqn_.*", model_name):
-    #             self.policy_net = ConvDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
-    #                 self.device
-    #             )
-    #             if str(self.device) == "cuda":
-    #                 self.policy_net.load_state_dict(torch.load(path))
-    #             else:
-    #                 self.policy_net.load_state_dict(
-    #                     torch.load(path, map_location=torch.device("cpu"))
-    #                 )
-    #         elif re.match(".*_ddqn_.*", model_name):
-    #             self.policy_net = ConvDuelingDQN(
-    #                 self.INPUT_DIM, self.ACTION_NUMBER
-    #             ).to(self.device)
-    #             if str(self.device) == "cuda":
-    #                 self.policy_net.load_state_dict(torch.load(path))
-    #             else:
-    #                 self.policy_net.load_state_dict(
-    #                     torch.load(path, map_location="cpu")
-    #                 )
-    #         else:
-    #             raise RuntimeError(
-    #                 "Please Provide a valid model name or valid path."
-    #             )
-    #     else:
-    #         raise RuntimeError("Path can not be None if model Name is not None.")
-
-    # def load_weights(self, path):
-    #     pass
-
-    # def demo(self, env_demo: Environment, model_name=None, path=None, steps=100):
-    #     cumulative_reward = [0 for t in range(len(env_demo.data))]
-    #     reward_list = [0 for t in range(len(env_demo.data))]
-    #     true_values = [0 for t in range(len(env_demo.data))]
-    #     self.load_policy(model_name=model_name, path=path)
-    #     print(f'demo for {steps} steps.', )
-    #     # TODO: it can be better to get state from service and one state in loop (dedupl)
-
-    #     for step in tqdm(
-    #         range(steps)
-    #     ):
-    #         print('>>> tick:', step)
-    #         # Select and perform an action
-    #         state = env_demo.get_state()
-    #         action = self.select_action_tensor(state)
-    #         reward, done, _ = env_demo.step(action, state)
-
-    #         # Collect reward and true value
-    #         true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
-    #         true_values[step] = true_value
-    #         cumulative_reward[step] += (
-    #             reward.item() + cumulative_reward[step - 1 if step - 1 > 0 else 0]
-    #         )
-    #         reward_list[step] = reward.item()
-    #         # ...
-    #         vector = (
-    #             action.item(),
-    #             reward.item(),
-    #             done,
-    #             true_value,
-    #             env_demo.agent_positions
-    #             )
-    #         print('exit state:')
-    #         pprint(vector)
-
-    #         # Load next state
-    #         # next_state = env_demo.get_state()
-    #         # state = next_state
-    #         if done:
-    #             # ...
-    #             break
-
-    #     return cumulative_reward, reward_list, true_values

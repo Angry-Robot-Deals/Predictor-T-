@@ -306,6 +306,10 @@ class RlEcAg_Predictor:
                     steps=DEMO_ITERATIONS,
                 )
 
+                if settings.rest:
+                    self.double_dqn_agent.demo_run_rest()
+
+
                 (
                     self.double_dqn_agent_test,
                     _,
