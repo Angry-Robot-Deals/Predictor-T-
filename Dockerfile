@@ -1,7 +1,6 @@
 FROM python:3.11
 WORKDIR /app
-COPY . /app
+COPY . .
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-# RUN tensorboard --logdir /app/Bot_code_and_models/logs
-# WORKDIR /app/Bot_code_and_models
-CMD [ "python", "agent.py" ]
+CMD [ "python3", "TradingFlow/agent.py" ]

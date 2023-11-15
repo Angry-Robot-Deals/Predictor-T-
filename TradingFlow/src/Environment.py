@@ -1,8 +1,11 @@
+import time
+
 import torch
 from src.utils import load_data_ram, show_loader, clean_loader, demo_wait_tick
 
 # TODO: for different exchanges
 COMMISION = 0.001
+
 
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
@@ -16,6 +19,13 @@ class Environment:
            reward (:obj:`str`): Type of reward function to use, either sharpe ratio
               "sr" or profit function "profit"
         """
+        self.init_price = None
+        self.cumulative_return = None
+        self.agent_open_position_value = None
+        self.agent_positions = None
+        self.done = None
+        self.tick = None
+        self.profits = None
         self.remote = remote
         self.data = data
         self.reward_f = reward if reward == "sr" else "profit"
@@ -27,6 +37,7 @@ class Environment:
         self.last_price = None
 
         self.symbol = symbol
+        self.send_profit_fn = send_profit_fn
 
     def reset(self):
         """
@@ -48,7 +59,7 @@ class Environment:
         )
 
     def get_state(
-        self,
+            self,
     ):
         """
         Return the current state of the environment. NOTE: if called after
@@ -62,13 +73,13 @@ class Environment:
             if not self.remote:
                 to_tensors_values = [
                     el
-                    for el in self.data.iloc[self.tick - 23 : self.tick + 1, :]["Close"]
+                    for el in self.data.iloc[self.tick - 23: self.tick + 1, :]["Close"]
                 ]
             else:
                 # TODO: double check & fix it well or genetics can be used
                 to_tensors_values = [
                     el
-                    for el in self.data.iloc[self.tick - 23 : self.tick + 1, :]["Close"]
+                    for el in self.data.iloc[self.tick - 23: self.tick + 1, :]["Close"]
                 ]
 
             t1 = torch.tensor(
@@ -100,10 +111,12 @@ class Environment:
                 state
             current_state (:obj:`torch.tensor` :dtype:`torch.float`):
                 the state of the environment after the action execution.
+                :param act:
+                :param state:
         """
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         state = self.data.iloc[-1, :]["Close"]
-        sell_nothing = False
+        sell_nothing: bool = False
 
         def execute_action(act):
             global sell_nothing
@@ -141,7 +154,7 @@ class Environment:
                     sell_nothing = True
                 for position in self.agent_positions:
                     profits += (
-                        state - position
+                            state - position
                     )  # profit = close - my_position for each my_position "p"
 
                 if not self.remote:
@@ -184,12 +197,12 @@ class Environment:
             self.agent_open_position_value += state - position - COMMISION
             if self.remote:
                 self.cumulative_return[self.action_number] += (
-                    position - self.last_price
-                ) / self.init_price
+                                                                      position - self.last_price
+                                                              ) / self.init_price
             else:
                 self.cumulative_return[self.tick] += (
-                    position - self.init_price
-                ) / self.init_price
+                                                             position - self.init_price
+                                                     ) / self.init_price
 
         # TODO: it is reward function we need te test it for any case
         # COLLECT THE REWARD
@@ -209,8 +222,6 @@ class Environment:
         if sell_nothing and (reward > -5):
             reward = -5
 
-
-
         # TODO: solve remote or not attribute for demo
         # UPDATE THE STATE FOR NEXT TICK
         if not self.remote:
@@ -221,17 +232,25 @@ class Environment:
             self.action_number += 1
             if self.action_number == self.demo_iterations:
                 # todo: check if it is ok for closing all open positions                
-                self.done = True                
+                self.done = True
                 # self.profits += self.agent_open_position_value
-
 
         # TODO: extract it in utils
         if self.remote:
+            profit = sum(self.profits)
             print(f"### {self.symbol} ###")
             print(".........")
-            print("Profit: ", sum(self.profits))
+            print("Profit: ", profit)
             print("Value:", self.agent_open_position_value)
             print(".........")
+            if self.send_profit_fn is not None:
+                import asyncio
+                asyncio.run(
+                    self.send_profit_fn(
+                        timestamp=time.time(),
+                        profit=profit,
+                        volume=self.agent_open_position_value
+                    ))
 
         return (
             torch.tensor([reward], device=device, dtype=torch.float),

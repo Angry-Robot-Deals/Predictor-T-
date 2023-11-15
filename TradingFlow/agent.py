@@ -3,13 +3,11 @@ import pandas as pd
 import random
 from datetime import datetime
 
-
 from tensorboardX import SummaryWriter
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from prettytable import PrettyTable as PrettyTable
 
 from src.Config import settings
-
 
 from src.Agent import Agent
 from src.Environment import Environment
@@ -20,11 +18,11 @@ from src.utils import (
 )
 from dotenv import load_dotenv
 
-if False:
-    from src.Database import send_signal, send_profit
+if "db" in settings.monitoring:
+    from src.Database import send_signal, send_profit, save_iteration_stats
+    from src.trade.dashboard.Entities import Stats
 else:
     from src.utils import send_signal, send_profit
-
 
 # to yaml / .env config [w4]
 docker = os.getenv("IN_DOCKER" or None)
@@ -35,7 +33,7 @@ TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
 SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
-TRADING_PERIOD = 3
+TRADING_PERIOD = 600
 TRAIN_EPOCHS = 20000
 TRAIN_DAYS = 365
 
@@ -44,7 +42,7 @@ TEST_APPROVE_ACCURACY = 0.6
 
 DEMO_PRELOAD_DAYS = 0  # 0 - current last 1000 candles
 DEMO_ITERATIONS = TRADING_PERIOD
-DEMO_CLIENTS = 1 # this needed for balancing
+DEMO_CLIENTS = 1  # this needed for balancing
 
 SYMBOL = "BTC/USDT"
 TIMEFRAME = "1m"
@@ -53,7 +51,7 @@ EXCHANGE = "binance"
 
 class RlEcAg_Predictor:
     def __init__(self, demo: bool = False, **kwargs) -> None:
-        if 'symbol' in kwargs:
+        if "symbol" in kwargs:
             global SYMBOL
             SYMBOL = kwargs.get("symbol")
             self.symbol = SYMBOL
@@ -147,7 +145,10 @@ class RlEcAg_Predictor:
         # For not ready model
         if Train:
             self.profit_train_env = Environment(
-                self.df[self.index : self.index + self.train_size], "profit", symbol=self.symbol, steps=DEMO_ITERATIONS
+                self.df[self.index: self.index + self.train_size],
+                "profit",
+                symbol=self.symbol,
+                steps=DEMO_ITERATIONS,
             )
             self.double_dqn_agent_test = self.double_dqn_agent.train(
                 env=self.profit_train_env,
@@ -160,7 +161,7 @@ class RlEcAg_Predictor:
         else:
             if not self.remote:
                 self.profit_test_env = Environment(
-                    self.df[self.index + self.train_size : self.index + TRADING_PERIOD],
+                    self.df[self.index + self.train_size: self.index + TRADING_PERIOD],
                     "profit",
                     symbol=self.symbol,
                 )
@@ -190,10 +191,10 @@ class RlEcAg_Predictor:
                     # AGENT EVOLUTION HERE
                     index = random.randrange(len(self.df) - TRADING_PERIOD - 1)
                     profit_test_env = Environment(
-                        self.df[index + self.train_size : index + TRADING_PERIOD],
+                        self.df[index + self.train_size: index + TRADING_PERIOD],
                         "profit",
                         remote=False,
-                        symbol=self.symbol
+                        symbol=self.symbol,
                     )
 
                     # Profit Double DQN
@@ -218,7 +219,6 @@ class RlEcAg_Predictor:
                     self.writer.add_scalar("Agent Test End", avg_mean, i)
 
                     # Предположим, у вас есть список с истинными классами (1 - выигрыш, 0 - проигрыш)
-                    # Предположим, у вас есть список с предсказанными классами (1 - предсказанный выигрыш, 0 - предсказанный проигрыш)
                     true_labels = true_values
                     profits_trues = [1 if x > 0 else 0 for x in true_values]
                     predicted_profits = [
@@ -298,12 +298,12 @@ class RlEcAg_Predictor:
 
                 # load env data
                 profit_demo_env = Environment(
-                    self.df, 
-                    "profit", 
-                    remote=True, 
-                    send_profit_fn=send_profit, 
-                    symbol=self.symbol, 
-                    steps=DEMO_ITERATIONS
+                    self.df,
+                    "profit",
+                    remote=True,
+                    send_profit_fn=send_profit,
+                    symbol=self.symbol,
+                    steps=DEMO_ITERATIONS,
                 )
 
                 (
@@ -319,7 +319,7 @@ class RlEcAg_Predictor:
                 )
 
                 print(profit_demo_env.cumulative_return)
-                # Comulative return for parallel bots
+                # Cumulative return for parallel bots
                 self.profit_ddqn_return.extend(profit_demo_env.cumulative_return)
 
                 # avg_mean = sum(self.profit_ddqn_return) / len(
@@ -359,10 +359,17 @@ class RlEcAg_Predictor:
                 )
 
                 # print("Iteration: ", i)
-                to_tensorboard = print_stats(
-                    "ProfitDDQN (stats)", self.profit_ddqn_return, t
+                # to_tensorboard = print_stats(
+                #     "ProfitDDQN (stats)", self.profit_ddqn_return, t
+                # )
+
+                save_iteration_stats(
+                    name='ProfitDDQN',
+                    means=t.get_json_string(),
+                    profit_usdt=0,
+                    volume=0,
+                    positions=profit_demo_env.cumulative_return
                 )
-                print(t)
 
                 # ta = PrettyTable(
                 #     [
