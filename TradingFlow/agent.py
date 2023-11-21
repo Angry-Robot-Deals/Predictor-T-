@@ -415,6 +415,16 @@ class RlEcAg_Predictor:
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--symbol", type=str, default="BTCUSDT")
+    parser.add_argument("--rest", type=bool, default=False)
+    parser.add_argument("--demo", type=bool, default=False)
+    parser.add_argument("--evaluate", type=bool, default=False)
+    parser.add_argument("--db", type=bool, default=False)
+    arguments = parser.parse_args()
+    print(arguments)
+
     # init agent
     agent_predictions = RlEcAg_Predictor(demo=True)
     print(settings)

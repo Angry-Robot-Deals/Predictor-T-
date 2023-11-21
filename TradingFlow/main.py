@@ -32,6 +32,7 @@ console = Console()
 # 5. trade in model out trade results
 os.system("clear")
 
+
 class Tradee:
     def __init__(self, symbol) -> None:
         from agent import RlEcAg_Predictor
@@ -60,11 +61,10 @@ class Tradee:
         self.price_predictor = None
         self.wallet = None
 
-
     def test(self, **kwargs):
         console.log("test")
         console.log("symbol:", kwargs.get("target"))
-    
+
         # if current metrics is ok go to next step
         return {
             "step": "test",
@@ -115,20 +115,20 @@ class Tradee:
             "symbol": self.symbol,
         }
 
-    def process_handler(self):        
+    def process_handler(self):
         print(self.__dict__)
         run, exist, fresh = check_model_state(self.symbol, settings=settings)
         # is fresh
         if run:
             console.log(f"{self.symbol}: return.")
             return
-        
+
         console.log(f"{self.symbol}: proceed.")
         self.price_predictor = RlEcAg_Predictor(
-                    demo=True,
-                    symbol=self.symbol
-                    )        
-        
+            demo=True,
+            symbol=self.symbol
+        )
+
         if not exist:
             trained = self.train()
             console.log(str(trained))
@@ -142,8 +142,6 @@ class Tradee:
 
         demostrated = self.flow_demo()
         console.log(str(demostrated))
-
-
 
 
 def proceed_tradee(symbol):
