@@ -1,61 +1,41 @@
+from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv())
+
 from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.responses import JSONResponse
-from fastapi_jwt_auth import AuthJWT
-from fastapi_jwt_auth.exceptions import AuthJWTException
-from pydantic import BaseModel
+from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+
+from . import crud
+from .schemas import UserSchema
+from .auth import create_access_token, verify_password, verify_token, check_active, check_admin
+from .sendmail import send_mail
+
+from .database import get_db, engine
+
+from . import models
 
 app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
 
 from src.Agent import Agent
-import uvicorn
+
 runing_agent = None
 
 
-class User(BaseModel):
-    username: str
-    password: str
-
-# in production you can use Settings management
-# from pydantic to get secret key from .env
-class Settings(BaseModel):
-    authjwt_secret_key: str = "secret"
-
-
-@AuthJWT.load_config
-def get_config():
-    return Settings()
-
-
-@app.exception_handler(AuthJWTException)
-def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
-
-@app.post('/login')
-def login(user: User, Authorize: AuthJWT = Depends()):
-    if user.username != "test" or user.password != "test":
-        raise HTTPException(status_code=401,detail="Bad username or password")
-
-    # subject identifier for who this token is for example id or username from database
-    access_token = Authorize.create_access_token(subject=user.username)
-    return {"access_token": access_token}
-
-
-@app.get('/user')
-def user(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
-
-    current_user = Authorize.get_jwt_subject()
-    return {"user": current_user}
-
-
+@app.get("/ping")
+def index():
+    return {"message": "service running..."}
 
 
 @app.get("/")
-def ping(Authorize: AuthJWT = Depends()):
+def ping():
     global runing_agent
+    if runing_agent is None:
+        return {
+            "agent": None,
+        }
 
     c_state = (
         runing_agent.env_vector.iloc[::-1][:10].to_dict("records")
@@ -104,7 +84,75 @@ def ping(Authorize: AuthJWT = Depends()):
     }
 
 
+@app.post("/register")
+def register_user(user: UserSchema, db: Session = Depends(get_db)):
+    # db_user = crud.get_users_by_username(db=db, username=user.username)
+    # if db_user:
+    #     raise HTTPException(status_code=400, detail="Email existiert bereits im System")
+    db_user = crud.create_user(db=db, user=user)
+    token = create_access_token(db_user)
+    send_mail(to=db_user.email, token=token, recipient=db_user.username)
+    return db_user
+
+
+@app.post("/login")
+def login_user(
+        form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
+    db_user = crud.get_users_by_username(db=db, username=form_data.username)
+    if not db_user:
+        raise HTTPException(
+            status_code=401, detail="Username not found. Please register first"
+        )
+
+    if verify_password(form_data.password, db_user.hashed_password):
+        token = create_access_token(db_user)
+        return {"access_token": token, "token_Type": "bearer"}
+    raise HTTPException(status_code=401, detail="Check your username and password")
+
+
+@app.get("/verify/{token}", response_class=HTMLResponse)
+def login_user(token: str, db: Session = Depends(get_db)):
+    payload = verify_token(token)
+    username = payload.get("sub")
+    db_user = crud.get_users_by_username(db, username)
+    db_user.is_active = True
+    db.commit()
+    return f"""
+    <html>
+        <head>
+            <title>Confirmation of Registration</title>
+        </head>
+        <body>
+            <h2>Activation of {username} successful!</h2>
+            <a href="https://localhost:8000">
+                Zurück
+            </a>
+        </body>
+    </html>
+    """
+
+
+@app.get("/users")
+def get_all_users(db: Session = Depends(get_db)):
+    users = crud.get_users(db=db)
+    return users
+
+
+@app.get("/secured", dependencies=[Depends(check_active)])
+def get_all_users(db: Session = Depends(get_db)):
+    users = crud.get_users(db=db)
+    return users
+
+
+@app.get("/adminsonly", dependencies=[Depends(check_admin)])
+def get_all_users(db: Session = Depends(get_db)):
+    users = crud.get_users(db=db)
+    return users
+
+
 def run(agent: Agent) -> None:
     global runing_agent
+    import uvicorn
     runing_agent = agent
     uvicorn.run(app, host="0.0.0.0", port=8000)
