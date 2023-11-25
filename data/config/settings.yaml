@@ -39,7 +39,7 @@ monitoring:
     token: ""
     chat_id: ""
     admin_chat_id: ""
-  db:
+  db1:
     - name: "angry_bots"
       enabled: false
       host: ""
