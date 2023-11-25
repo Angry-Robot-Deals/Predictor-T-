@@ -1,5 +1,6 @@
-from sqlmodel import Session, create_engine
 import os
+
+from sqlmodel import Session, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///.././data/config/site.db"

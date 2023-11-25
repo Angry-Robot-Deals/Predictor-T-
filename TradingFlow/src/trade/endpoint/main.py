@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from . import crud
-from .schemas import UserSchema
+from .schemas import UserSchemaIn, UserSchemaOut
 from .auth import create_access_token, verify_password, verify_token, check_active, check_admin
 from .sendmail import send_mail
 
@@ -29,8 +29,8 @@ def index():
     return {"message": "service running..."}
 
 
-@app.get("/")
-def ping():
+@app.get("/", dependencies=[Depends(check_active)])
+def predict():
     global runing_agent
     if runing_agent is None:
         return {
@@ -85,10 +85,10 @@ def ping():
 
 
 @app.post("/register")
-def register_user(user: UserSchema, db: Session = Depends(get_db)):
-    # db_user = crud.get_users_by_username(db=db, username=user.username)
-    # if db_user:
-    #     raise HTTPException(status_code=400, detail="Email existiert bereits im System")
+def register_user(user: UserSchemaIn, db: Session = Depends(get_db)):
+    db_user = crud.get_users_by_username(db=db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="{user.username} - already registered")
     db_user = crud.create_user(db=db, user=user)
     token = create_access_token(db_user)
     send_mail(to=db_user.email, token=token, recipient=db_user.username)
@@ -133,13 +133,13 @@ def login_user(token: str, db: Session = Depends(get_db)):
     """
 
 
-@app.get("/users")
+@app.get("/users", dependencies=[Depends(check_admin)])
 def get_all_users(db: Session = Depends(get_db)):
     users = crud.get_users(db=db)
     return users
 
 
-@app.get("/secured", dependencies=[Depends(check_active)])
+@app.get("/secured", dependencies=[Depends(check_admin)])
 def get_all_users(db: Session = Depends(get_db)):
     users = crud.get_users(db=db)
     return users
