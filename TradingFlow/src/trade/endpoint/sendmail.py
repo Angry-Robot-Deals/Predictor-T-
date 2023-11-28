@@ -4,6 +4,9 @@ from email.message import EmailMessage
 
 email = os.getenv("email")
 password = os.getenv("password")
+smpt_ssl = os.getenv("smpt_ssl")
+service_host = os.getenv("service_host")
+service_port = os.getenv("service_port")
 
 
 def send_mail(to, token, recipient, email=email, password=password):
@@ -21,7 +24,7 @@ def send_mail(to, token, recipient, email=email, password=password):
     <div id="box">
       <h2>Hallo {recipient},</h2> 
         <p> Bevor du die Seite nutzen kannst, klicke 
-            <a href="http://localhost:8000/verify/{token}">
+            <a href="http://{service_host}:{service_port}/verify/{token}">
                 hier
             </a> um deine registrierung zu bestätigen
         </p>
@@ -74,7 +77,7 @@ def send_mail(to, token, recipient, email=email, password=password):
     msg["To"] = [to]
 
     # Send the message via our own SMTP server.
-    server = smtplib.SMTP_SSL("smtp.jino.ru", 465)
+    server = smtplib.SMTP_SSL(smpt_ssl, 465)
     server.login(email, password)
     server.send_message(msg)
     server.quit()

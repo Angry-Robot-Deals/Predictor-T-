@@ -3,4 +3,5 @@ WORKDIR /app
 COPY . .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-CMD [ "python3", "TradingFlow/agent.py" ]
+EXPOSE 8000
+CMD [ "python3", "TradingFlow/agent.py", "--rest", "True" ]

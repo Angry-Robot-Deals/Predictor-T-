@@ -425,6 +425,9 @@ if __name__ == "__main__":
     arguments = parser.parse_args()
     print(arguments)
 
+    # init endpoint db
+    from src.trade.endpoint.models import create_all
+    create_all()
     # init agent
     agent_predictions = RlEcAg_Predictor(demo=True)
     print(settings)

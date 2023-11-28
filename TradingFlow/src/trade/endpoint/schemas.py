@@ -12,7 +12,6 @@ class UserSchemaIn(BaseModel):
     email: EmailStr
     username: str
     password: str
-    role: Roles = "user"
 
 
 class UserSchemaOut(UserSchemaIn):

@@ -5,8 +5,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rl-trade-bot-torch-demo
-    env_file:
-      - .env    
-    restart: always
     ports:
       - "8000:8000"
+    volumes:
+      - ./:/app
+      - ./data:/app/data
+    env_file:
+      - docker.env
+    restart: always
+

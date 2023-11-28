@@ -2,22 +2,24 @@ import os
 import dotenv
 import yaml
 
-dotenv.load_dotenv("/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/.env")
+dotenv.load_dotenv("../.env")
 
-SETTINGS_PATH = os.getenv("SETTINGS" or '../config/settings.yaml')
+SETTINGS_PATH = os.getenv("SETTINGS" or '../data/config/settings.yaml')
 
 settings_yaml = None
 with open(SETTINGS_PATH, "r") as file:
     settings_yaml = yaml.safe_load(file)
 
+
 class Settings:
     def __init__(self) -> None:
         self.optimisation = True
         self.scope = settings_yaml.get("symbols" or 'BTC/USDT')
-        self.lock = settings_yaml.get("lock" or 'data/temp/.lock')
+        self.lock = settings_yaml.get("lock" or '../data/temp/.lock')
         self.FRESH_DAYS = 30
         self.monitoring = settings_yaml.get("monitoring" or {})
         self.rest = bool(os.getenv("REST_ENDPOINTS" or False))
+
 
 settings = Settings()
 

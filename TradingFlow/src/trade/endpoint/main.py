@@ -1,6 +1,8 @@
+import os
+
 from dotenv import find_dotenv, load_dotenv
 
-load_dotenv(find_dotenv())
+load_dotenv('../../.env')
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import HTMLResponse
@@ -17,12 +19,11 @@ from .database import get_db, engine
 from . import models
 
 app = FastAPI()
-models.Base.metadata.create_all(bind=engine)
 
 from src.Agent import Agent
 
 runing_agent = None
-
+notify = False
 
 @app.get("/ping")
 def index():
@@ -91,7 +92,8 @@ def register_user(user: UserSchemaIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="{user.username} - already registered")
     db_user = crud.create_user(db=db, user=user)
     token = create_access_token(db_user)
-    send_mail(to=db_user.email, token=token, recipient=db_user.username)
+    if notify:
+        send_mail(to=db_user.email, token=token, recipient=db_user.username)
     return db_user
 
 
