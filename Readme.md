@@ -32,4 +32,5 @@ To Run Pretrained Models:
 To Run Train and Test:
 * `python train_test.py`
 
-# Link to test datastream:
+To Run Prediction agent:
+* `python agent.py`
