@@ -10,7 +10,7 @@ If you interested in RL and this project you can get more research information [
 <img src='https://github.com/xsa-dev/Trading-Bot---Deep-Reinforcement-Learning/blob/master/docs/Screenshot%202023-11-03%20at%2000.00.46.png?raw=true'/>
 
 # Dependencies 
-Dependecies:    
+Dependencies:    
 * prettytable (`pip install prettytable`)  
 * PyTorch
 * tqdm
@@ -18,7 +18,7 @@ Dependecies:
 * numpy
 * matplotlib
 
-# Instalation
+# Installation
 To create venv
 * `python -m venv venv && source venv/bin/activate`
 
