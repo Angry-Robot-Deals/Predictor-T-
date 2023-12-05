@@ -1,18 +1,14 @@
-from concurrent import futures
 import os
-from concurrent.futures import ThreadPoolExecutor
-from agent import RlEcAg_Predictor
-from src.Config import settings
-from pprint import pprint
-
 import logging
+from concurrent.futures import ThreadPoolExecutor
+
 from rich.logging import RichHandler
 from rich.console import Console
 
-
-
+from src.Config import settings
 from src.ui.fullscreen import demo
-from src.utils import check_model_state
+from src.tools.utils import check_model_state
+from agent import RlEcAg_Predictor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +18,7 @@ logging.basicConfig(
 )
 console = Console()
 
-# main is:
+# main is - not it is agent, it is multiagent:
 # for each trading / training / testing period do:
 # 0. init data and current metrics
 # 1. train in memory out train model
@@ -34,37 +30,17 @@ os.system("clear")
 
 class Tradee:
     def __init__(self, symbol) -> None:
-        from agent import RlEcAg_Predictor
-
-        TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
-        SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
-        TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
-
-        TRADING_PERIOD = 600
-        TRAIN_EPOCHS = 20000
-        TRAIN_DAYS = 365
-
-        TEST_SIMULATIONS = 1000
-        TEST_APPROVE_ACCURACY = 0.6
-
-        DEMO_PRELOAD_DAYS = 0  # 0 - current last 1000 candles
-        DEMO_ITERATIONS = 100
-        DEMO_CLIENTS = 1
-
-        SYMBOL = "BTC/USDT"
-        TIMEFRAME = "1m"
-        EXCHANGE = "binance"
-
         # agent
         self.symbol = symbol
         self.price_predictor = None
         self.wallet = None
 
-
     def test(self, **kwargs):
         console.log("test")
         console.log("symbol:", kwargs.get("target"))
-    
+
+        self.price_predictor.trade_train_test()
+
         # if current metrics is ok go to next step
         return {
             "step": "test",
@@ -75,9 +51,12 @@ class Tradee:
 
     def train(self, **kwargs):
         console.log("train")
+
+        self.price_predictor.trade_train_test()
+
         if settings.optimisation:
             return self.hypertune(**kwargs)
-        
+
         return {
             "step": "train",
             "state": "done",
@@ -87,6 +66,25 @@ class Tradee:
 
     def hypertune(self, **kwargs):
         # https://ax.dev/
+        TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
+        SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
+        TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
+
+        TRADING_PERIOD = 600
+        TRAIN_EPOCHS = 100
+        TRAIN_DAYS = 365
+
+        TEST_SIMULATIONS = 1000
+        TEST_APPROVE_ACCURACY = 0.6
+
+        DEMO_PRELOAD_DAYS = 0  # 0 - current last 1000 candles
+        DEMO_ITERATIONS = 100
+        DEMO_CLIENTS = 1
+
+        SYMBOL = self.symbol
+        TIMEFRAME = "1m"
+        EXCHANGE = "binance"
+
         console.log("hypertune with https://ax.dev/")
         return {
             "step": "tune",
@@ -96,7 +94,7 @@ class Tradee:
         }
 
     def eval(self, **kwargs):
-        console.log("eval")
+        console.log("eval not ready yet, to do it with https://ax.dev/")
         return {
             "step": "eval",
             "state": "done",
@@ -115,35 +113,44 @@ class Tradee:
             "symbol": self.symbol,
         }
 
-    def process_handler(self):        
-        print(self.__dict__)
-        run, exist, fresh = check_model_state(self.symbol, settings=settings)
-        # is fresh
+    def process_handler(self):
+        # TODO use for all process: 1) train all, valid all, test all, and tune all
+        run, exist, tuned = check_model_state(self.symbol, settings=settings)
+
+        # tuned - is already tuned
         if run:
-            console.log(f"{self.symbol}: return.")
+            # run - is in trade now
+            console.log(
+                f"{self.symbol}: return is online now and not ready for restart. only force restart it."
+            )
             return
-        
-        console.log(f"{self.symbol}: proceed.")
-        self.price_predictor = RlEcAg_Predictor(
-                    demo=True,
-                    symbol=self.symbol
-                    )        
-        
+
+        # information
+        console.log(f"{self.symbol}: ready for processing.")
+
+        # exist - is already ready for rl
         if not exist:
+            self.price_predictor = RlEcAg_Predictor(demo=False, symbol=self.symbol)
             trained = self.train()
             console.log(str(trained))
-
             tested = self.test()
             console.log(str(tested))
+            console.log(f"{self.symbol}: test done. ready for tune.")
+            exist = True
 
-        if not fresh:
+        # exist - is already trained
+        if not tuned:
+            self.price_predictor = RlEcAg_Predictor(demo=False, symbol=self.symbol)
             evaluated = self.eval()
             console.log(str(evaluated))
+            console.log("{self.symbol}: eval done. ready for demo.")
+            tuned = True
 
-        demostrated = self.flow_demo()
-        console.log(str(demostrated))
-
-
+        # allready read for demo trade
+        if exist and tuned:
+            self.price_predictor = RlEcAg_Predictor(demo=True, symbol=self.symbol)
+            demostrated = self.flow_demo()
+            console.log(str(demostrated))
 
 
 def proceed_tradee(symbol):
@@ -153,22 +160,11 @@ def proceed_tradee(symbol):
 
 
 def main():
-    pprint(settings.__dict__)
-
     free_processors_count = int(os.cpu_count() / 2)
     max_threads = free_processors_count
     console.log("free processors count:", int(free_processors_count))
-
-    # start new process
-    # Создаем ThreadPoolExecutor с ограничением по количеству потоков
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
         executor.map(proceed_tradee, settings.scope)
-
-    # TODO: ui
-    # demo(
-    #     cosole=console,
-    #     # all graphs in ui with layout
-    # )
 
 
 if __name__ == "__main__":

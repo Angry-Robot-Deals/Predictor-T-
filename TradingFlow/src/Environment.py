@@ -1,10 +1,10 @@
 import torch
-from src.utils import load_data_ram, show_loader, clean_loader, demo_wait_tick
+from src.tools.utils import load_data_ram, show_loader, clean_loader, demo_wait_tick
 
-# TODO: for different exchanges
-COMMISION = 0.001
+# TODO for different exchanges
+COMMISION = 0.001 # FIXME
 
-# TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
+# TODO modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
     def __init__(self, data, reward, remote=False, send_profit_fn=None, symbol="BTC/USDT", steps=600):
         """
@@ -65,7 +65,7 @@ class Environment:
                     for el in self.data.iloc[self.tick - 23 : self.tick + 1, :]["Close"]
                 ]
             else:
-                # TODO: double check & fix it well or genetics can be used
+                # TODO double check & fix it well or genetics can be used
                 to_tensors_values = [
                     el
                     for el in self.data.iloc[self.tick - 23 : self.tick + 1, :]["Close"]
@@ -81,10 +81,10 @@ class Environment:
         else:
             return None
 
-    def step(self, act, state=None):
-        # TODO: this function can work differently, it can open sell orders and open buy orders
-        # TODO: and exit with take profit and stop loss
-        # TODO: it is strategy, we can change it
+    def step(self, act: torch.Tensor, state=None):
+        # TODO this function can work differently, it can open sell orders and open buy orders
+        # TODO and exit with take profit and stop loss
+        # TODO it is strategy, we can change it
         """
         Perform the action of the Agent on the environment, computes the reward
         and update some datastructures to keep track of some econometric indexes
@@ -108,6 +108,9 @@ class Environment:
         def execute_action(act):
             global sell_nothing
 
+            if type(act) == torch.Tensor:
+                act = act.item()
+
             # EXECUTE THE ACTION (act = 0: stay, 1: buy, 2: sell)
             def print_action():
                 if act == 0:
@@ -127,14 +130,14 @@ class Environment:
 
             # BUY
             if act == 1:
-                # TODO: integration
+                # TODO integration
                 self.agent_positions.append(state)
                 if self.remote:
                     print("Add position: ", state, "at", self.action_number)
 
             # SELL
             if act == 2:
-                # TODO: integration waiting...
+                # TODO integration waiting...
 
                 profits = 0
                 if len(self.agent_positions) < 1:
@@ -176,12 +179,17 @@ class Environment:
 
         # TRAIN & TEST
         else:
-            state = self.data.iloc[self.tick, :]["Close"]
+            try:
+                state = self.data.iloc[self.tick, :]["Close"]
+            except: 
+                # FIXME fix it
+                self.tick = len(self.data) - 1
+                state =  self.data.iloc[self.tick, :]["Close"]
 
         # TO CHECK if the calculus is correct according to the definition
         self.agent_open_position_value = 0
         for position in self.agent_positions:
-            self.agent_open_position_value += state - position - COMMISION
+            self.agent_open_position_value += state - position - COMMISION # TODO commision?
             if self.remote:
                 self.cumulative_return[self.action_number] += (
                     position - self.last_price
@@ -191,7 +199,7 @@ class Environment:
                     position - self.init_price
                 ) / self.init_price
 
-        # TODO: it is reward function we need te test it for any case
+        # TODO it is reward function we need te test it for any case
         # COLLECT THE REWARD
         if self.reward_f == "profit":
             if self.remote:
@@ -211,7 +219,7 @@ class Environment:
 
 
 
-        # TODO: solve remote or not attribute for demo
+        # TODO solve remote or not attribute for demo
         # UPDATE THE STATE FOR NEXT TICK
         if not self.remote:
             self.tick += 1  # self.t - tick
@@ -220,12 +228,12 @@ class Environment:
         else:
             self.action_number += 1
             if self.action_number == self.demo_iterations:
-                # todo: check if it is ok for closing all open positions                
+                # TODO check if it is ok for closing all open positions                
                 self.done = True                
                 # self.profits += self.agent_open_position_value
 
 
-        # TODO: extract it in utils
+        # TODO extract it in utils
         if self.remote:
             print(f"### {self.symbol} ###")
             print(".........")

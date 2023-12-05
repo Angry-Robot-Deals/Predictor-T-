@@ -13,7 +13,7 @@ from src.Config import settings
 
 from src.Agent import Agent
 from src.Environment import Environment
-from src.utils import (
+from src.tools.utils import (
     load_data,
     print_stats,
     load_data_ram,
@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 if False:
     from src.Database import send_signal, send_profit
 else:
-    from src.utils import send_signal, send_profit
+    from src.tools.utils import send_signal, send_profit
 
 
 # to yaml / .env config [w4]
@@ -35,8 +35,8 @@ TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
 SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
-TRADING_PERIOD = 3
-TRAIN_EPOCHS = 20000
+TRADING_PERIOD = 300
+TRAIN_EPOCHS = 10
 TRAIN_DAYS = 365
 
 TEST_SIMULATIONS = 1000
@@ -44,7 +44,7 @@ TEST_APPROVE_ACCURACY = 0.6
 
 DEMO_PRELOAD_DAYS = 0  # 0 - current last 1000 candles
 DEMO_ITERATIONS = TRADING_PERIOD
-DEMO_CLIENTS = 1 # this needed for balancing
+DEMO_CLIENTS = 1  # this needed for balancing
 
 SYMBOL = "BTC/USDT"
 TIMEFRAME = "1m"
@@ -53,7 +53,7 @@ EXCHANGE = "binance"
 
 class RlEcAg_Predictor:
     def __init__(self, demo: bool = False, **kwargs) -> None:
-        if 'symbol' in kwargs:
+        if "symbol" in kwargs:
             global SYMBOL
             SYMBOL = kwargs.get("symbol")
             self.symbol = SYMBOL
@@ -94,7 +94,12 @@ class RlEcAg_Predictor:
         # it can be replace for train data loader from open api or ccxt
         if not remote:
             # load from local file
-            df = load_data(TRAIN_DATA_FILEPATH)
+            df, last_tick = load_data_ram(
+                days=DEMO_PRELOAD_DAYS,
+                symbol=ticker,
+                timeframe=timeframe,
+                exchange=exchange,
+            )
         else:
             df, last_tick = load_data_ram(
                 days=DEMO_PRELOAD_DAYS,
@@ -132,6 +137,7 @@ class RlEcAg_Predictor:
             TARGET_UPDATE,
             MODEL="ddqn",
             DOUBLE=True,
+            symbol=self.symbol
         )
         if self.demo:
             self.remote = True
@@ -147,30 +153,34 @@ class RlEcAg_Predictor:
         # For not ready model
         if Train:
             self.profit_train_env = Environment(
-                self.df[self.index : self.index + self.train_size], "profit", symbol=self.symbol, steps=DEMO_ITERATIONS
+                self.df[self.index : self.index + self.train_size],
+                "profit",
+                symbol=self.symbol,
+                steps=DEMO_ITERATIONS,
             )
-            self.double_dqn_agent_test = self.double_dqn_agent.train(
+            self.double_dqn_agent_test, new_model_path = self.double_dqn_agent.train(
                 env=self.profit_train_env,
                 path=model_filepath,
                 num_episodes=TRAIN_EPOCHS,
             )
-            # TODO: may be next time we can store images into tensorboard
+            # TODO may be next time we can store images into tensorboard
+            model_filepath = new_model_path
 
         # For ready model
         else:
             if not self.remote:
+                # Profit ENV construction
                 self.profit_test_env = Environment(
                     self.df[self.index + self.train_size : self.index + TRADING_PERIOD],
                     "profit",
                     symbol=self.symbol,
                 )
-                # Profit Double DQN
+                # Agent: Profit Double DQN
                 self.double_dqn_agent_test, _, true_values = self.double_dqn_agent.test(
                     env_test=self.profit_test_env,
                     model_name="profit_reward_double_dqn_model",
                     path=model_filepath,
                 )
-            # self.profit_ddqn_return.append(self.profit_test_env.cumulative_return)
 
     def loop(self, train_test=True):
         if train_test:
@@ -193,7 +203,7 @@ class RlEcAg_Predictor:
                         self.df[index + self.train_size : index + TRADING_PERIOD],
                         "profit",
                         remote=False,
-                        symbol=self.symbol
+                        symbol=self.symbol,
                     )
 
                     # Profit Double DQN
@@ -292,18 +302,17 @@ class RlEcAg_Predictor:
         else:
             Testing = True
             while Testing:
-                # demo iterations on the DEMO_CLIENTS environment every 1 minutes
                 self.init_env()
                 self.profit_ddqn_return = []
 
                 # load env data
                 profit_demo_env = Environment(
-                    self.df, 
-                    "profit", 
-                    remote=True, 
-                    send_profit_fn=send_profit, 
-                    symbol=self.symbol, 
-                    steps=DEMO_ITERATIONS
+                    self.df,
+                    "profit",
+                    remote=True,
+                    send_profit_fn=send_profit,
+                    symbol=self.symbol,
+                    steps=DEMO_ITERATIONS,
                 )
 
                 (
@@ -319,35 +328,8 @@ class RlEcAg_Predictor:
                 )
 
                 print(profit_demo_env.cumulative_return)
-                # Comulative return for parallel bots
                 self.profit_ddqn_return.extend(profit_demo_env.cumulative_return)
 
-                # avg_mean = sum(self.profit_ddqn_return) / len(
-                #     self.profit_ddqn_return
-                # )
-                # print(f"Reward mean: ", avg_mean)
-                # true_labels = true_values
-                # profits_trues = [1 if x > 0 else 0 for x in true_values]
-                # predicted_profits = [
-                #     1 if x > 0 else 0 for x in self.profit_ddqn_return
-                # ]
-                # если правильное действие, то 1, если действие не правильное -1,
-                # accuracy = accuracy_score(predicted_profits, profits_trues)
-                # precision = precision_score(predicted_profits, profits_trues)
-                # recall = recall_score(predicted_profits, profits_trues)
-                # f1 = f1_score(predicted_profits, profits_trues)
-
-                # self.accuracy.append(accuracy)
-                # self.precision.append(precision)
-                # self.recall.append(recall)
-                # self.f1.append(f1)
-
-                # print("Accuracy:", accuracy)
-                # print("Precision:", precision)
-                # print("Recall:", recall)
-                # print("F1 Score:", f1)
-
-                # Reporting
                 t = PrettyTable(
                     [
                         "Trading System",
@@ -358,40 +340,10 @@ class RlEcAg_Predictor:
                     ]
                 )
 
-                # print("Iteration: ", i)
                 to_tensorboard = print_stats(
                     "ProfitDDQN (stats)", self.profit_ddqn_return, t
                 )
                 print(t)
-
-                # ta = PrettyTable(
-                #     [
-                #         "Metrics",
-                #         "Avg. Accuracy (%)",
-                #         "Max Accuracy (%)",
-                #         "Min Accuracy (%)",
-                #         "Std. Dev.",
-                #     ]
-                # )
-                # to_tensorboard = print_stats("ProfitDDQN (accuracy)", self.accuracy, ta)
-                # print(ta)
-
-                # mean1 = to_tensorboard.get("mean")
-                # max1 = to_tensorboard.get("max")
-                # min1 = to_tensorboard.get("min")
-                # std1 = to_tensorboard.get("std")
-                # timestamp_now = datetime.now().timestamp()
-
-                # self.writer.add_scalar("Avg. Return (%)", mean1, timestamp_now)
-                # self.writer.add_scalar("Max Return (%)", max1, timestamp_now)
-                # self.writer.add_scalar("Min Return (%)", min1, timestamp_now)
-                # self.writer.add_scalar("Std. Dev", std1, timestamp_now)
-
-                # plot_multiple_conf_interval()
-                # os.remove(MODEL_FILEPATH)
-                # while os.path.isfile(path=SAVED_MODEL_FILEPATH):
-                #    pass
-                # quality = input()
                 quality = False
                 if quality == "stop":
                     break

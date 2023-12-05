@@ -5,7 +5,6 @@ import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 from src.Environment import Environment
 from src.models.dqns import ConvDQN, ConvDuelingDQN
-from src.models.txs import transformer_predictions_langchain
 from src.memory.replay import ReplayMemory
 from src.memory.replay import Transition
 import random
@@ -63,6 +62,7 @@ class Agent:
         TARGET_UPDATE=10,
         MODEL="ddqn",
         DOUBLE=True,
+        symbol="NO_NAME",
     ):
         self.writer = SummaryWriter(
             log_dir=os.getenv("TENSORBOARD_LOGS")
@@ -118,6 +118,8 @@ class Agent:
         self.training_cumulative_reward = []
         self.remote = True
 
+        self.symbol = symbol
+
     def select_action_tensor(self, state):
         """the epsilon-greedy action selection"""
         state = state.unsqueeze(0).unsqueeze(1)
@@ -136,8 +138,8 @@ class Agent:
                 "Select Action Epsilon", eps_threshold, self.steps_done
             )
         else:
-            print("Select Action Epsilon", eps_threshold, self.steps_done)
-
+            if False:
+                print("Select Action Epsilon", eps_threshold, self.steps_done)
 
         self.steps_done += 1
         # [Exploitation] pick the best action according to current Q approx.
@@ -299,14 +301,14 @@ class Agent:
         l1_loss = F.l1_loss(predicted_values, actual_values)
 
         self.writer.add_scalar("Loss", loss, self.steps_done)
-        self.writer.add_scalar("MSE Loss", mse_loss, self.steps_done)
+        self.writer.add_scalar("MSE_Loss", mse_loss, self.steps_done)
         self.writer.add_scalar("RMSE_loss", rmse, self.steps_done)
         self.writer.add_scalar("L1_loss", l1_loss, self.steps_done)
 
-        self.writer.add_scalar("= Loss", loss, self.steps_done + episode_index)
-        self.writer.add_scalar("= MSE Loss", mse_loss, self.steps_done + episode_index)
-        self.writer.add_scalar("= RMSE_loss", rmse, self.steps_done + episode_index)
-        self.writer.add_scalar("= L1_loss", l1_loss, self.steps_done + episode_index)
+        self.writer.add_scalar("s_Loss", loss, self.steps_done + episode_index)
+        self.writer.add_scalar("s_MSE_Loss", mse_loss, self.steps_done + episode_index)
+        self.writer.add_scalar("s_RMSE_loss", rmse, self.steps_done + episode_index)
+        self.writer.add_scalar("s_L1_loss", l1_loss, self.steps_done + episode_index)
 
         # Optimize the model
         self.optimizer.zero_grad()
@@ -380,11 +382,12 @@ class Agent:
     #         param.grad.data.clamp_(-1, 1)
     #     self.optimizer.step()
 
-    def train(self, env, path, num_episodes=100):
+    def train(self, env: Environment, path, num_episodes=100):
+
         self.TRAINING = True
         cumulative_reward = [0 for t in range(num_episodes)]
 
-        print("Training:")
+        print(f"Training for {num_episodes} episodes:")
         for episode_index in tqdm(range(num_episodes)):
             # Initialize the environment and state
             env.reset()  # reset the env st it is set at the beginning of the time series
@@ -393,7 +396,7 @@ class Agent:
             for tick_index in range(len(env.data)):  # while not env.done
                 # Select and perform an action
                 action = self.select_action_tensor(state)
-                reward, done, _ = env.step(action)
+                reward, done, _ = env.step(act=action)
                 cumulative_reward[episode_index] += reward.item()
                 # Observe new state: it will be None if env.done = True. It is the next
                 # state since env.step() has been called two rows above.
@@ -409,15 +412,11 @@ class Agent:
                         self.optimize_double_dqn_model(episode_index)
                     else:
                         self.optimize_model()
+
                 # Log cumulative reward and loss continuisly
                 self.writer.add_scalar(
-                    "Train Cumulative Reward t",
+                    "Train_Cumulative_Reward_t",
                     cumulative_reward[episode_index],
-                    tick_index + episode_index,
-                )
-                self.writer.add_scalar(
-                    "Train Cumulative Reward t'",
-                    cumulative_reward[episode_index] * -1,
                     tick_index + episode_index,
                 )
                 if done:
@@ -429,7 +428,7 @@ class Agent:
 
             # Log cumulative reward and loss
             self.writer.add_scalar(
-                "Train Cumulative Reward",
+                "Train_Cumulative_Reward_t",
                 cumulative_reward[episode_index],
                 episode_index,
             )
@@ -437,22 +436,39 @@ class Agent:
         def save_model():
             # save the model
             if self.DOUBLE:
-                model_name = env.reward_f + "_reward_double_" + self.MODEL + "_model"
+                model_name = (
+                    env.reward_f
+                    + "_reward_double_"
+                    + self.MODEL
+                    + '_'
+                    + self.symbol.replace("/", "_")
+                    + "_model"
+                )
                 count = 0
                 while os.path.exists(path):  # avoid overrinding models
                     count += 1
                     model_name = model_name + "_" + str(count)
             else:
-                model_name = env.reward_f + "_reward_" + self.MODEL + "_model"
+                model_name = (
+                    env.reward_f
+                    + "_reward_"
+                    + self.MODEL
+                    + '_'
+                    + self.symbol.replace("/", "_")
+                    + "_model"
+                )
                 count = 0
                 while os.path.exists(path):  # avoid overrinding models
                     count += 1
                     model_name = model_name + "_" + str(count)
 
-            torch.save(self.policy_net.state_dict(), path)
+            folder = "/".join(path.split("/")[:-1])
+            new_model_path = os.path.join(folder, model_name)
+            torch.save(self.policy_net.state_dict(), new_model_path)
+            return new_model_path
 
-        save_model()
-        return cumulative_reward
+        new_model_path = save_model()
+        return cumulative_reward, new_model_path
 
     def test(self, env_test, model_name=None, path=None):
         self.TRAINING = False

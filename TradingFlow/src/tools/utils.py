@@ -9,6 +9,9 @@ import datetime
 import sys
 import time
 
+import json
+from datetime import datetime, timedelta
+import pytz
 
 from src.Loader import load_to_memory, get_date_before
 
@@ -167,7 +170,7 @@ def load_data_ram(days=0, symbol="BTC/USDT", timeframe="1m", exchange="binance")
                 limit=1000,
             )
         except Exception as E:
-            # TODO: fix it more enterpriseble
+            # TODO fix it more enterpriseble
             print(E)
             # 3
             data, last_tick = load_to_memory(
@@ -184,7 +187,7 @@ def load_data_ram(days=0, symbol="BTC/USDT", timeframe="1m", exchange="binance")
     timestamp_seconds = last_tick / 1000
 
     # Convert to a datetime object
-    datetime_obj = datetime.datetime.utcfromtimestamp(timestamp_seconds)
+    datetime_obj = datetime.utcfromtimestamp(timestamp_seconds)
 
     # Format the datetime object as a string
     formatted_time = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
@@ -263,11 +266,11 @@ async def send_profit(**kwargs):
     print(str(kwargs))
 
 
-def check_model_state(symbol, settings=None):
-    import json
-    from datetime import datetime, timedelta
-    import pytz
+def check_metrics(symbol, settings=None):
+    # later on bull & bear treading
+    return False
 
+def check_model_state(symbol, settings=None):
     lock_file = settings.lock
 
     def read_json_file(file_path):
@@ -275,14 +278,6 @@ def check_model_state(symbol, settings=None):
             json_object = json.load(file)
         return json_object
     
-    locks = read_json_file(lock_file)
-    task_state = locks.get(symbol)
-    # is run
-    run = task_state.get("run" or False)
-    # is exist
-    file_path = task_state.get("file_path" or None)
-    exist = os.path.exists(file_path)
-    # is fresh
     def check_updated_at(saved_at):
         current_datetime = datetime.now()
         thirty_days_before = current_datetime - timedelta(days=settings.FRESH_DAYS)   
@@ -290,7 +285,14 @@ def check_model_state(symbol, settings=None):
         timezone = pytz.timezone("UTC")  
         aware_datetime = thirty_days_before.replace(tzinfo=timezone)
         return aware_datetime < updated_at
-    
+        
+    locks = read_json_file(lock_file)
+    task_state = locks.get(symbol)
+    run: bool = task_state.get("run" or False)
+    file_path = task_state.get("file_path" or None)
+    exist = os.path.exists(file_path)
+
     updated = task_state.get("updated_at")
-    fresh = check_updated_at(updated)
-    return run, exist, fresh
+    production = check_updated_at(updated)
+    profitable = check_metrics(symbol, settings=settings)
+    return run, exist, production and profitable

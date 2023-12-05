@@ -84,7 +84,7 @@ def write_to_csv(filename, exchange, data):
 
 
 def load_to_memory(exchange_id, max_retries, symbol, timeframe, since, limit):
-    # instantiate the exchange by id
+    # instantiate the exchange by id TODO add angry data support
     exchange = getattr(ccxt, exchange_id)(
         {
             "enableRateLimit": True,
@@ -108,7 +108,7 @@ def load_to_memory(exchange_id, max_retries, symbol, timeframe, since, limit):
         ohlcv, columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
     )
     # df = df.drop('Timestamp', axis=1)
-    print("Loaded ohlcv:", df.shape)
+    print("{symbol} - Loaded ohlcv:", df.shape)
     return df, ohlcv[-1][0]
 
 

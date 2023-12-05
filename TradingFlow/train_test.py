@@ -4,7 +4,7 @@ import warnings
 
 from src.Environment import Environment
 from src.Agent import Agent
-from src.utils import load_data, print_stats, plot_multiple_conf_interval, load_data_ram
+from src.tools.utils import load_data, print_stats, plot_multiple_conf_interval, load_data_ram
 
 
 ################## INFORMATION ######################

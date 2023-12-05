@@ -6,3 +6,4 @@ numpy
 matplotlib
 tensorboardX
 python-dotenv
+ax-platform
