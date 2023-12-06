@@ -36,10 +36,10 @@ SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
 TRADING_PERIOD = 300
-TRAIN_EPOCHS = 10
+TRAIN_EPOCHS = 5
 TRAIN_DAYS = 365
 
-TEST_SIMULATIONS = 1000
+TEST_SIMULATIONS = 20
 TEST_APPROVE_ACCURACY = 0.6
 
 DEMO_PRELOAD_DAYS = 0  # 0 - current last 1000 candles
@@ -89,6 +89,8 @@ class RlEcAg_Predictor:
         )  # You can customize the log directory
 
         print(self.__dict__)
+
+        self.new_model_filepath = None
 
     def init_data(self, ticker, timeframe, exchange, remote=True) -> pd.DataFrame:
         # it can be replace for train data loader from open api or ccxt
@@ -145,9 +147,19 @@ class RlEcAg_Predictor:
             self.remote = False
 
     def init_env(self) -> None:
-        model_filepath = SAVED_MODEL_FILEPATH
+        # try:
+        model_filepath = os.getenv("TORCH_MODEL_FILEPATH")
+        # except Exception as E:
+        #     SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
+        #     model_filepath = SAVED_MODEL_FILEPATH
         print(f"search model in {model_filepath}")
-        Train = not os.path.isfile(path=model_filepath)
+        def search_model(model_filepath) -> bool:
+            for file in os.listdir(model_filepath):
+                if self.symbol.replace('/', '_') in file:
+                    return True
+            return False
+        
+        Train = not os.path.isfile(path=model_filepath) # not search_model(model_filepath)       # 
         print("need train (pretrainded model not exist):", "yes" if Train else "no")
 
         # For not ready model
@@ -164,11 +176,13 @@ class RlEcAg_Predictor:
                 num_episodes=TRAIN_EPOCHS,
             )
             # TODO may be next time we can store images into tensorboard
-            model_filepath = new_model_path
+            self.new_model_filepath = new_model_path
 
         # For ready model
         else:
             if not self.remote:
+                SAVED_MODEL_FILEPATH = self.new_model_filepath if self.new_model_filepath is not None else SAVED_MODEL_FILEPATH
+
                 # Profit ENV construction
                 self.profit_test_env = Environment(
                     self.df[self.index + self.train_size : self.index + TRADING_PERIOD],
@@ -206,6 +220,8 @@ class RlEcAg_Predictor:
                         symbol=self.symbol,
                     )
 
+                    SAVED_MODEL_FILEPATH = self.new_model_filepath if self.new_model_filepath is not None else SAVED_MODEL_FILEPATH
+
                     # Profit Double DQN
                     (
                         self.double_dqn_agent_test,
@@ -213,7 +229,8 @@ class RlEcAg_Predictor:
                         true_values,
                     ) = self.double_dqn_agent.test(
                         profit_test_env,
-                        model_name="profit_reward_double_dqn_model",
+                        # TODO fix
+                        model_name="profit_reward_double_ddqn_model",
                         path=SAVED_MODEL_FILEPATH,
                     )
 
@@ -222,10 +239,11 @@ class RlEcAg_Predictor:
                     avg_mean = sum(self.profit_ddqn_return[i]) / len(
                         self.profit_ddqn_return[i]
                     )
-                    print(f"Reward for {i}", avg_mean)
+                    if self.remote:
+                        print(f"Reward for {i}", avg_mean)
                     profit_test_env.reset()
                     i += 1
-                    self.writer.add_scalar("Agent Test End", avg_mean, i)
+                    self.writer.add_scalar("Agent_Test_End", avg_mean, i)
 
                     # Предположим, у вас есть список с истинными классами (1 - выигрыш, 0 - проигрыш)
                     # Предположим, у вас есть список с предсказанными классами (1 - предсказанный выигрыш, 0 - предсказанный проигрыш)
@@ -237,9 +255,9 @@ class RlEcAg_Predictor:
 
                     # если правильное действие, то 1, если действие не правильное -1,
                     accuracy = accuracy_score(predicted_profits, profits_trues)
-                    precision = precision_score(predicted_profits, profits_trues)
-                    recall = recall_score(predicted_profits, profits_trues)
-                    f1 = f1_score(predicted_profits, profits_trues)
+                    precision = precision_score(predicted_profits, profits_trues, zero_division=0)
+                    recall = recall_score(predicted_profits, profits_trues, zero_division=0)
+                    f1 = f1_score(predicted_profits, profits_trues, zero_division=0)
 
                     self.accuracy.append(accuracy)
                     self.precision.append(precision)
@@ -249,20 +267,21 @@ class RlEcAg_Predictor:
                     print("Accuracy:", accuracy)
                     print("Precision:", precision)
                     print("Recall:", recall)
-                    print("F1 Score:", f1)
+                    print("F1_Score:", f1)
 
                 # Reporting
                 t = PrettyTable(
                     [
                         "Trading System",
-                        "Avg. Return (%)",
-                        "Max Return (%)",
-                        "Min Return (%)",
-                        "Std. Dev.",
+                        "Avg_Return__p_",
+                        "Max_Return__p_",
+                        "Min_Return__p_",
+                        "Std_Dev",
                     ]
                 )
 
-                print("Iteration: ", i)
+                print("\r\nIteration: ", i)
+                print(f"{self.symbol} - tested.")
                 to_tensorboard = print_stats(
                     "ProfitDDQN (stats)", self.profit_ddqn_return, t
                 )
@@ -271,10 +290,10 @@ class RlEcAg_Predictor:
                 ta = PrettyTable(
                     [
                         "Metrics",
-                        "Avg. Accuracy (%)",
-                        "Max Accuracy (%)",
-                        "Min Accuracy (%)",
-                        "Std. Dev.",
+                        "Avg_Accuracy__p_",
+                        "Max_Accuracy__p_",
+                        "Min_Accuracy__p_",
+                        "Std_Dev.",
                     ]
                 )
                 to_tensorboard = print_stats("ProfitDDQN (accuracy)", self.accuracy, ta)
@@ -286,18 +305,18 @@ class RlEcAg_Predictor:
                 std1 = to_tensorboard.get("std")
                 timestamp_now = datetime.now().timestamp()
 
-                self.writer.add_scalar("Avg. Return (%)", mean1, timestamp_now)
-                self.writer.add_scalar("Max Return (%)", max1, timestamp_now)
-                self.writer.add_scalar("Min Return (%)", min1, timestamp_now)
-                self.writer.add_scalar("Std. Dev", std1, timestamp_now)
+                self.writer.add_scalar("Avg_Return__p_", mean1, timestamp_now)
+                self.writer.add_scalar("Max_Return__p_", max1, timestamp_now)
+                self.writer.add_scalar("Min_Return__p_", min1, timestamp_now)
+                self.writer.add_scalar("Std_Dev", std1, timestamp_now)
 
                 # plot_multiple_conf_interval()
                 # os.remove(MODEL_FILEPATH)
                 # while os.path.isfile(path=SAVED_MODEL_FILEPATH):
                 #    pass
 
-                Trained = input()
-                if Trained == "exit":
+                Trained = True
+                if Trained:
                     break
         else:
             Testing = True
@@ -314,6 +333,9 @@ class RlEcAg_Predictor:
                     symbol=self.symbol,
                     steps=DEMO_ITERATIONS,
                 )
+
+                SAVED_MODEL_FILEPATH = self.new_model_filepath if self.new_model_filepath is not None else SAVED_MODEL_FILEPATH
+
 
                 (
                     self.double_dqn_agent_test,
@@ -333,10 +355,10 @@ class RlEcAg_Predictor:
                 t = PrettyTable(
                     [
                         "Trading System",
-                        "Avg. Return (%)",
-                        "Max Return (%)",
-                        "Min Return (%)",
-                        "Std. Dev.",
+                        "Avg_Return__p_",
+                        "Max_Return__p_",
+                        "Min_Return__p_",
+                        "Std_Dev",
                     ]
                 )
 
@@ -352,7 +374,10 @@ class RlEcAg_Predictor:
         self.loop(train_test=True)
 
     def agent_demo(self):
-        self.loop(train_test=False)
+        # not work yet
+        # self.loop(train_test=False)
+        print("FIX DEMO: LOADING MODEL ISSUE!!!!")
+        pass
 
 
 if __name__ == "__main__":

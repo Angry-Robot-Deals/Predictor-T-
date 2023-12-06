@@ -445,7 +445,7 @@ class Agent:
                     + "_model"
                 )
                 count = 0
-                while os.path.exists(path):  # avoid overrinding models
+                while os.path.exists(os.path.join(path, model_name)):  # avoid overrinding models
                     count += 1
                     model_name = model_name + "_" + str(count)
             else:
@@ -458,12 +458,11 @@ class Agent:
                     + "_model"
                 )
                 count = 0
-                while os.path.exists(path):  # avoid overrinding models
+                while os.path.exists(os.path.join(path, model_name)):  # avoid overrinding models
                     count += 1
                     model_name = model_name + "_" + str(count)
 
-            folder = "/".join(path.split("/")[:-1])
-            new_model_path = os.path.join(folder, model_name)
+            new_model_path = os.path.join(path, model_name)
             torch.save(self.policy_net.state_dict(), new_model_path)
             return new_model_path
 
@@ -482,7 +481,7 @@ class Agent:
 
         # PREDICT
         env_test.reset()  # reset the env st it is set at the beginning of the time series
-        # TODO: here we can get state from service
+        # TODO here we can get state from service
         state = env_test.get_state()
         for t in tqdm(
             range(len(env_test.data))
@@ -498,8 +497,8 @@ class Agent:
                 reward.item() + cumulative_reward[t - 1 if t - 1 > 0 else 0]
             )
             reward_list[t] = reward
-            self.writer.add_scalar("Test Reward", reward_list[t], t)
-            self.writer.add_scalar("Test Action", action, t)
+            self.writer.add_scalar("Test_Reward", reward_list[t], t)
+            self.writer.add_scalar("Test_Action", action, t)
 
             # Observe new state: it will be None if env.done = True. It is the next
             # state since env.step() has been called two rows above.
@@ -624,7 +623,7 @@ class Agent:
             pass
 
         elif path is not None:
-            if re.match(".*_dqn_.*", model_name):
+            if re.match(".*_1dqn_.*", model_name):
                 self.policy_net = ConvDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
                     self.device
                 )
