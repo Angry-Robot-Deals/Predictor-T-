@@ -19,9 +19,7 @@ def retry_fetch_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):
     try:
         num_retries += 1
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit)
-        if VERBOSE == "minimal":
-            pass
-        else:
+        if VERBOSE != "minimal":
             print(
                 "Fetched",
                 len(ohlcv),
@@ -32,7 +30,7 @@ def retry_fetch_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):
                 exchange.iso8601(ohlcv[-1][0]),
             )
         return ohlcv
-    except Exception:
+    except Exception as e:
         if num_retries > max_retries:
             raise Exception(
                 "Failed to fetch",
@@ -41,7 +39,7 @@ def retry_fetch_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):
                 "OHLCV in",
                 max_retries,
                 "attempts",
-            )
+            ) from e
 
 
 def scrape_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):
@@ -94,7 +92,7 @@ def load_to_memory(exchange_id, max_retries, symbol, timeframe, since, limit):
         since = exchange.parse8601(since)
     exchange.load_markets()
     ohlcv = scrape_ohlcv(exchange, max_retries, symbol, timeframe, since, limit)
-    if not VERBOSE == "minimal":
+    if VERBOSE != "minimal":
         print(
             "Loaded",
             len(ohlcv),
@@ -146,8 +144,7 @@ def scrape_candles_to_csv(
 def get_date_before(days=1):
     today = datetime.now()
     one_month_ago = today - timedelta(days=days)
-    formatted_date = one_month_ago.strftime("%Y-%m-%dT%H:%M:%SZ")
-    return formatted_date
+    return one_month_ago.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 if __name__ == "__main__":

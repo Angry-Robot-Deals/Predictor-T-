@@ -63,9 +63,7 @@ def plot_conf_interval(name, cum_returns):
 
 def plot_multiple_conf_interval(names, cum_returns_list):
     """NB. cum_returns[i] must be 2-dim"""
-    i = 1
-
-    for cr in cum_returns_list:
+    for i, cr in enumerate(cum_returns_list, start=1):
         plt.subplot(len(cum_returns_list), 2, i)
         # Mean
         M = np.mean(np.array(cr), axis=0)
@@ -81,67 +79,19 @@ def plot_multiple_conf_interval(names, cum_returns_list):
         plt.grid(True)
         plt.plot(range(len(M)), M, linewidth=2)  # mean curve.
         plt.fill_between(range(len(M)), LL, UL, color="b", alpha=0.2)  # std curves.
-        i += 1
-
     plt.show()
 
 
 def split_raw_to_timerange():
-    # TODO: it can be data kitchen
-    if False:
-        df = pd.read_csv(path + "one_minute.csv")
-        dfs_to_concat = []
-        for count in range(0, len(df) - 300, 300):
-            five_minute_interval = df.iloc[count : count + 300]
-            aggregated_data = pd.DataFrame(
-                {
-                    "Open": [five_minute_interval["Open"].iloc[0]],
-                    "High": [five_minute_interval["High"].max()],
-                    "Low": [five_minute_interval["Low"].min()],
-                    "Close": [five_minute_interval["Close"].iloc[-1]],
-                }
-            )
-            dfs_to_concat.append(aggregated_data)
-        df_five_minute_aggregated = pd.concat(dfs_to_concat, ignore_index=True)
-        df_five_minute_aggregated.to_csv(
-            path + "five_minute_aggregated_dataset.csv", index=False
-        )
-        df = df_five_minute_aggregated
-        del df_five_minute_aggregated
-        print(f"Shape for range {timerange} of aggregated dataset:", df.shape)
-    if False:
-        df = pd.read_csv(path + "one_minute.csv")
-        dfs_to_concat = []
-
-        for count in range(0, len(df) - 60, 60):
-            hour_interval = df.iloc[count : count + 60]
-            aggregated_data = pd.DataFrame(
-                {
-                    "Open": [hour_interval["Open"].iloc[0]],
-                    "High": [hour_interval["High"].max()],
-                    "Low": [hour_interval["Low"].min()],
-                    "Close": [hour_interval["Close"].iloc[-1]],
-                }
-            )
-            dfs_to_concat.append(aggregated_data)
-
-        df_hourly_aggregated = pd.concat(dfs_to_concat, ignore_index=True)
-        df_hourly_aggregated.to_csv(path + "hourly_aggregated_dataset.csv", index=False)
-        df = df_hourly_aggregated
-        del df_hourly_aggregated
-        print(f"Shape for range {timerange} of aggregated dataset:", df.shape)
     raise Exception("NOT IMPLEMENTED YET!")
 
 
 def load_data(filepath=None, timerange=None):
     print(f"Processing `minutes?` to {timerange} from {filepath}")
-    if os.path.isfile(filepath):
-        df = pd.read_csv(filepath)
-        print("Shape of aggregated dataset:", df.shape)
-    else:
+    if not os.path.isfile(filepath):
         raise Exception(f"{filepath} ???? Not found!")
-        raise Exception(f"{filepath} ???? Not found!")
-
+    df = pd.read_csv(filepath)
+    print("Shape of aggregated dataset:", df.shape)
     return df
 
 
@@ -181,8 +131,6 @@ def load_data_ram(days=0, symbol="BTC/USDT", timeframe="1m", exchange="binance")
                 since=date_one_day_ago,
                 limit=1000,
             )
-            pass
-
     # Convert milliseconds timestamp to seconds
     timestamp_seconds = last_tick / 1000
 
@@ -215,7 +163,7 @@ def show_loader():
     # Initialize the index of the current character
     char_index = 0
 
-    for _ in range(len(loader_chars)):
+    for loader_char in loader_chars:
         # Print the current character without a newline
         sys.stdout.write("\r" + loader_chars[char_index])
         sys.stdout.flush()
@@ -243,27 +191,26 @@ def demo_wait_tick(last_tick):
     formatted_last_tick = last_tick_datetime.strftime("%Y-%m-%d %H:%M")
     formatted_current = current_datetime.strftime("%Y-%m-%d %H:%M")
 
-    is_need_wait = formatted_last_tick == formatted_current
-    return is_need_wait
+    return formatted_last_tick == formatted_current
 
 
-def print_action(act: int, agent_positions: list = []):
+def print_action(act: int, agent_positions: list = None):
+    if agent_positions is None:
+        agent_positions = []
     if act == 0:
         print("Stay...")
-    if act == 1:
+    elif act == 1:
         print("Buy...")
-    if act == 2 and len(agent_positions) > 0:
+    if act == 2 and agent_positions:
         print("Sell...")
-    else:
-        pass
 
 
 async def send_signal(**kwargs):
-    print(str(kwargs))
+    print(kwargs)
 
 
 async def send_profit(**kwargs):
-    print(str(kwargs))
+    print(kwargs)
 
 
 def check_metrics(symbol, settings=None):

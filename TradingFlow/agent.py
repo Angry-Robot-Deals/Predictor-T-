@@ -20,10 +20,7 @@ from src.tools.utils import (
 )
 from dotenv import load_dotenv
 
-if False:
-    from src.Database import send_signal, send_profit
-else:
-    from src.tools.utils import send_signal, send_profit
+from src.tools.utils import send_signal, send_profit
 
 
 # to yaml / .env config [w4]
@@ -53,13 +50,11 @@ EXCHANGE = "binance"
 
 class RlEcAg_Predictor:
     def __init__(self, demo: bool = False, **kwargs) -> None:
+        self.remote = None
         if "symbol" in kwargs:
             global SYMBOL
             SYMBOL = kwargs.get("symbol")
-            self.symbol = SYMBOL
-        else:
-            self.symbol = SYMBOL
-
+        self.symbol = SYMBOL
         # demo trade
         self.demo = demo
 
@@ -93,22 +88,13 @@ class RlEcAg_Predictor:
         self.new_model_filepath = None
 
     def init_data(self, ticker, timeframe, exchange, remote=True) -> pd.DataFrame:
-        # it can be replace for train data loader from open api or ccxt
-        if not remote:
-            # load from local file
-            df, last_tick = load_data_ram(
-                days=DEMO_PRELOAD_DAYS,
-                symbol=ticker,
-                timeframe=timeframe,
-                exchange=exchange,
-            )
-        else:
-            df, last_tick = load_data_ram(
-                days=DEMO_PRELOAD_DAYS,
-                symbol=ticker,
-                timeframe=timeframe,
-                exchange=exchange,
-            )
+        # load from local file
+        df, last_tick = load_data_ram(
+            days=DEMO_PRELOAD_DAYS,
+            symbol=ticker,
+            timeframe=timeframe,
+            exchange=exchange,
+        )
         return df
 
     def init_e_agent(self) -> Agent:
@@ -141,10 +127,7 @@ class RlEcAg_Predictor:
             DOUBLE=True,
             symbol=self.symbol
         )
-        if self.demo:
-            self.remote = True
-        else:
-            self.remote = False
+        self.remote = bool(self.demo)
 
     def init_env(self) -> None:
         # try:
@@ -199,6 +182,12 @@ class RlEcAg_Predictor:
     def loop(self, train_test=True):
         if train_test:
             Training = True
+            # plot_multiple_conf_interval()
+            # os.remove(MODEL_FILEPATH)
+            # while os.path.isfile(path=SAVED_MODEL_FILEPATH):
+            #    pass
+
+            Trained = True
             while Training:
                 # ENV EVOLUTION HERE
                 self.init_env()
@@ -310,16 +299,11 @@ class RlEcAg_Predictor:
                 self.writer.add_scalar("Min_Return__p_", min1, timestamp_now)
                 self.writer.add_scalar("Std_Dev", std1, timestamp_now)
 
-                # plot_multiple_conf_interval()
-                # os.remove(MODEL_FILEPATH)
-                # while os.path.isfile(path=SAVED_MODEL_FILEPATH):
-                #    pass
-
-                Trained = True
                 if Trained:
                     break
         else:
             Testing = True
+            quality = False
             while Testing:
                 self.init_env()
                 self.profit_ddqn_return = []
@@ -366,7 +350,6 @@ class RlEcAg_Predictor:
                     "ProfitDDQN (stats)", self.profit_ddqn_return, t
                 )
                 print(t)
-                quality = False
                 if quality == "stop":
                     break
 
@@ -377,7 +360,6 @@ class RlEcAg_Predictor:
         # not work yet
         # self.loop(train_test=False)
         print("FIX DEMO: LOADING MODEL ISSUE!!!!")
-        pass
 
 
 if __name__ == "__main__":

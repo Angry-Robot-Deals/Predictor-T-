@@ -115,9 +115,8 @@ def main():
     )
     profit_train_env.reset()
 
-    i = 0
-    while i < N_TEST:
-        print("Test nr. %s" % str(i + 1))
+    for i in range(N_TEST):
+        print(f"Test nr. {str(i + 1)}")
         index = random.randrange(len(df) - TRADING_PERIOD - 1)
 
         profit_test_env = Environment(
@@ -138,8 +137,6 @@ def main():
         cr_profit_dueling_ddqn_test, _ = dueling_double_dqn_agent.test(profit_test_env)
         profit_dueling_ddqn_return.append(profit_test_env.cumulative_return)
         profit_test_env.reset()
-
-        i += 1
 
     dqn_agent = Agent(
         REPLAY_MEM_SIZE,
@@ -203,9 +200,8 @@ def main():
     )
     sharpe_train_env.reset()
 
-    i = 0
-    while i < N_TEST:
-        print("Test nr. %s" % str(i + 1))
+    for i in range(N_TEST):
+        print(f"Test nr. {str(i + 1)}")
         index = random.randrange(len(df) - TRADING_PERIOD - 1)
 
         sharpe_test_env = Environment(
@@ -226,8 +222,6 @@ def main():
         cr_sharpe_dueling_ddqn_test, _ = dueling_double_dqn_agent.test(sharpe_test_env)
         sharpe_dueling_ddqn_return.append(sharpe_test_env.cumulative_return)
         sharpe_test_env.reset()
-
-        i += 1
 
     # --------------------------------------- Print Test Stats ---------------------------------------------------------
     t = PrettyTable(

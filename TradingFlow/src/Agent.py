@@ -124,52 +124,28 @@ class Agent:
         """the epsilon-greedy action selection"""
         state = state.unsqueeze(0).unsqueeze(1)
         sample = random.random()
-        if self.TRAINING:
-            if self.steps_done > self.EPS_STEPS:
-                eps_threshold = self.EPS_END
-            else:
-                eps_threshold = self.EPS_START
-        else:
+        if self.TRAINING and self.steps_done > self.EPS_STEPS or not self.TRAINING:
             eps_threshold = self.EPS_END
-
+        else:
+            eps_threshold = self.EPS_START
         # Log the epsilon value
         if not self.remote:
             self.writer.add_scalar(
                 "Select Action Epsilon", eps_threshold, self.steps_done
             )
-        else:
-            if False:
-                print("Select Action Epsilon", eps_threshold, self.steps_done)
-
         self.steps_done += 1
-        # [Exploitation] pick the best action according to current Q approx.
-        if sample > eps_threshold:
-            with torch.no_grad():
-                # Return the number of the action with highest non normalized probability
-                # TODO: decide if diverge from paper and normalize probabilities with
-                # softmax or at least compare the architectures
-                return torch.tensor(
-                    [self.policy_net(state).argmax()],
-                    device=self.device,
-                    dtype=torch.long,
-                )
-
-        # with torch.no_grad():
-        #     # Получите вероятности для каждого действия
-        #     action_probs = self.policy_net(state)
-
-        #     # Примените softmax для нормализации вероятностей
-        #     action_probs = F.softmax(action_probs, dim=1)
-
-        #     # Выберите действие на основе вероятностей
-        #     action = torch.multinomial(action_probs, 1)
-
-        #     return action
-
-        # [Exploration]  pick a random action from the action space
-        else:
+        if sample <= eps_threshold:
             return torch.tensor(
                 [random.randrange(self.ACTION_NUMBER)],
+                device=self.device,
+                dtype=torch.long,
+            )
+        with torch.no_grad():
+            # Return the number of the action with highest non normalized probability
+            # TODO: decide if diverge from paper and normalize probabilities with
+            # softmax or at least compare the architectures
+            return torch.tensor(
+                [self.policy_net(state).argmax()],
                 device=self.device,
                 dtype=torch.long,
             )
@@ -447,7 +423,7 @@ class Agent:
                 count = 0
                 while os.path.exists(os.path.join(path, model_name)):  # avoid overrinding models
                     count += 1
-                    model_name = model_name + "_" + str(count)
+                    model_name = f"{model_name}_{count}"
             else:
                 model_name = (
                     env.reward_f
@@ -460,7 +436,7 @@ class Agent:
                 count = 0
                 while os.path.exists(os.path.join(path, model_name)):  # avoid overrinding models
                     count += 1
-                    model_name = model_name + "_" + str(count)
+                    model_name = f"{model_name}_{count}"
 
             new_model_path = os.path.join(path, model_name)
             torch.save(self.policy_net.state_dict(), new_model_path)
@@ -471,9 +447,9 @@ class Agent:
 
     def test(self, env_test, model_name=None, path=None):
         self.TRAINING = False
-        cumulative_reward = [0 for t in range(len(env_test.data))]
-        reward_list = [0 for t in range(len(env_test.data))]
-        true_values = [0 for t in range(len(env_test.data))]
+        cumulative_reward = [0 for _ in range(len(env_test.data))]
+        reward_list = [0 for _ in range(len(env_test.data))]
+        true_values = [0 for _ in range(len(env_test.data))]
 
         # Load policy from train torch model
         self.load_policy(model_name=model_name, path=path)
@@ -494,7 +470,7 @@ class Agent:
             true_values[t] = true_value
 
             cumulative_reward[t] += (
-                reward.item() + cumulative_reward[t - 1 if t - 1 > 0 else 0]
+                reward.item() + cumulative_reward[t - 1 if t > 1 else 0]
             )
             reward_list[t] = reward
             self.writer.add_scalar("Test_Reward", reward_list[t], t)
@@ -552,9 +528,9 @@ class Agent:
         steps=100,
         fn_signal=None,
     ):
-        cumulative_reward = [0 for t in range(steps)]
-        reward_list = [0 for t in range(steps)]
-        true_values = [0 for t in range(steps)]
+        cumulative_reward = [0 for _ in range(steps)]
+        reward_list = [0 for _ in range(steps)]
+        true_values = [0 for _ in range(steps)]
         self.load_policy(model_name=model_name, path=path)
         # todo: where memory?
         print(
@@ -573,7 +549,7 @@ class Agent:
             true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
             true_values[stp] = true_value
             cumulative_reward[stp] += (
-                reward.item() + cumulative_reward[stp - 1 if stp - 1 > 0 else 0]
+                reward.item() + cumulative_reward[stp - 1 if stp > 1 else 0]
             )
 
             # reward list

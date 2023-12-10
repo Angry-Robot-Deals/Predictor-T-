@@ -16,8 +16,7 @@ class DQN(nn.Module):
         )
 
     def forward(self, x):
-        h = self.fc_val(x)
-        return h
+        return self.fc_val(x)
 
 
 class DuelingDQN(nn.Module):
@@ -48,9 +47,7 @@ class DuelingDQN(nn.Module):
         features = self.feauture_layer(state)
         values = self.value_stream(features)
         advantages = self.advantage_stream(features)
-        qvals = values + (advantages - advantages.mean())
-
-        return qvals
+        return values + (advantages - advantages.mean())
 
 
 # Convolutional DQN
@@ -136,5 +133,4 @@ class ConvDuelingDQN(nn.Module):
         split = self.split_layer(max_pool_2)
         values = self.value_stream(split)
         advantages = self.advantage_stream(split)
-        qvals = values + (advantages - advantages.mean())
-        return qvals
+        return values + (advantages - advantages.mean())

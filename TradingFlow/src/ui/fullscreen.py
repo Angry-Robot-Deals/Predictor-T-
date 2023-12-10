@@ -93,7 +93,10 @@ def make_trade_vector() -> Panel:
     for coin in coins[::-1]:
         sponsor_message.add_row(
             coin,
-            *[Spinner(spinner_name, style=rnd.choice(colors)) for i in range(1, 30)],
+            *[
+                Spinner(spinner_name, style=rnd.choice(colors))
+                for _ in range(1, 30)
+            ]
         )
 
     return sponsor_message
@@ -124,9 +127,7 @@ def make_logs_reader() -> Panel:
 
     # Create a panel with the console output
     console_output = console.export_text()
-    panel = Panel(console_output)
-
-    return panel
+    return Panel(console_output)
 
 
 def make_table(side="Sell") -> Table:

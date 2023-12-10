@@ -36,15 +36,13 @@ class Environment:
         """
         self.tick = 23
         self.done = False
-        self.profits = [0 for e in range(len(self.data))]
+        self.profits = [0 for _ in range(len(self.data))]
         self.agent_positions = []
         self.agent_open_position_value = 0
 
-        self.cumulative_return = [0 for e in range(len(self.data))]
+        self.cumulative_return = [0 for _ in range(len(self.data))]
         self.init_price = (
-            self.data.iloc[0, :]["Close"]
-            if not self.remote
-            else self.data.iloc[-1, :]["Close"]
+            self.data.iloc[-1, :]["Close"] if self.remote else self.data.iloc[0, :]["Close"]
         )
 
     def get_state(
@@ -59,25 +57,14 @@ class Environment:
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if not self.done:
-            if not self.remote:
-                to_tensors_values = [
-                    el
-                    for el in self.data.iloc[self.tick - 23 : self.tick + 1, :]["Close"]
-                ]
-            else:
-                # TODO double check & fix it well or genetics can be used
-                to_tensors_values = [
-                    el
-                    for el in self.data.iloc[self.tick - 23 : self.tick + 1, :]["Close"]
-                ]
-
-            t1 = torch.tensor(
+            to_tensors_values = list(
+                self.data.iloc[self.tick - 23 : self.tick + 1, :]["Close"]
+            )
+            return torch.tensor(
                 to_tensors_values,
                 device=device,
                 dtype=torch.float,
             )
-            return t1
-
         else:
             return None
 
@@ -119,8 +106,6 @@ class Environment:
                     print("Buy...")
                 if act == 2 and len(self.agent_positions) > 0:
                     print("Sell...")
-                else:
-                    pass
 
             if act == 0:  # Do Nothing
                 pass
@@ -157,9 +142,8 @@ class Environment:
                         print("Sell position:", state, "at", self.action_number)
                         print("Profits: ", profits)
                     self.agent_positions = []
-                else:
-                    pass
-                # reward += profits
+                        # reward += profits
+
 
         execute_action(act)
 
@@ -177,11 +161,10 @@ class Environment:
             self.last_price = state
             print(f"{self.symbol} - updated data for last tick:", last_tick, "last price:", state)
 
-        # TRAIN & TEST
         else:
             try:
                 state = self.data.iloc[self.tick, :]["Close"]
-            except: 
+            except Exception:
                 # FIXME fix it
                 self.tick = len(self.data) - 1
                 state =  self.data.iloc[self.tick, :]["Close"]

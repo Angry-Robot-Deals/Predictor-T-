@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 console = Console()
 
-# main is - not it is agent, it is multiagent:
+# main is - not it is agent, it is multi-agent:
 # for each trading / training / testing period do:
 # 0. init data and current metrics
 # 1. train in memory out train model
@@ -28,7 +28,8 @@ console = Console()
 # 5. trade in model out trade results
 os.system("clear")
 
-class Tradee:
+
+class Trader:
     def __init__(self, symbol) -> None:
         # agent
         self.symbol = symbol
@@ -103,7 +104,7 @@ class Tradee:
         }
 
     def flow_demo(self, **kwargs):
-        console.log(f"Trade Flow:")
+        console.log("Trade Flow:")
         console.log(f"demo: {self.symbol}")
         self.price_predictor.agent_demo()
         return {
@@ -113,7 +114,7 @@ class Tradee:
             "symbol": self.symbol,
         }
 
-    def tradeflow(self):
+    def tradeoff(self):
         # TODO use for all process: 1) train all, valid all, test all, and tune all
         run, exist, tuned = check_model_state(self.symbol, settings=settings)
 
@@ -130,14 +131,7 @@ class Tradee:
 
         # exist - is already ready for rl
         if not exist:
-            self.price_predictor = RlEcAg_Predictor(demo=False, symbol=self.symbol)
-            trained = self.train()
-            console.log(str(trained))
-            tested = self.test()
-            console.log(str(tested))
-            console.log(f"{self.symbol}: test done. ready for tune.")
-            exist = True
-
+            exist = self._extracted_from_tradeoff18()
         # exist - is already trained
         if not tuned:
             self.price_predictor = RlEcAg_Predictor(demo=False, symbol=self.symbol)
@@ -146,25 +140,35 @@ class Tradee:
             console.log("{self.symbol}: eval done. ready for demo.")
             tuned = True
 
-        # allready read for demo trade
+        # already read for demo trade
         if exist and tuned:
             self.price_predictor = RlEcAg_Predictor(demo=True, symbol=self.symbol)
-            demostrated = self.flow_demo()
-            console.log(str(demostrated))
+            demonstrated = self.flow_demo()
+            console.log(str(demonstrated))
+
+    # TODO Rename this here and in `trade-flow`
+    def _extracted_from_tradeoff18(self):
+        self.price_predictor = RlEcAg_Predictor(demo=False, symbol=self.symbol)
+        trained = self.train()
+        console.log(str(trained))
+        tested = self.test()
+        console.log(str(tested))
+        console.log(f"{self.symbol}: test done. ready for tune.")
+        return True
 
 
-def proceed_tradee(symbol):
+def proceed_trader(symbol):
     console.log(symbol)
-    tradee = Tradee(symbol)
-    tradee.tradeflow()
+    trader = Trader(symbol)
+    trader.tradeoff()
 
 
 def main():
     free_processors_count = int(os.cpu_count() / 2)
     max_threads = free_processors_count
-    console.log("free processors count:", int(free_processors_count))
+    console.log("free processors count:", max_threads)
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        executor.map(proceed_tradee, settings.scope)
+        executor.map(proceed_trader, settings.scope)
 
 
 if __name__ == "__main__":
