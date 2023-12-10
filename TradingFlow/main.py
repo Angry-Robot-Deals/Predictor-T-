@@ -113,7 +113,7 @@ class Tradee:
             "symbol": self.symbol,
         }
 
-    def process_handler(self):
+    def tradeflow(self):
         # TODO use for all process: 1) train all, valid all, test all, and tune all
         run, exist, tuned = check_model_state(self.symbol, settings=settings)
 
@@ -156,7 +156,7 @@ class Tradee:
 def proceed_tradee(symbol):
     console.log(symbol)
     tradee = Tradee(symbol)
-    tradee.process_handler()
+    tradee.tradeflow()
 
 
 def main():
